@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>حار بارد - اللعبة</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; }
+        body { background-color: #0f172a; color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* الشريط العلوي (هدف الخصم) */
+        .top-bar { background: #1e293b; padding: 15px; text-align: center; border-bottom: 2px solid #334155; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 10; position: relative;}
+        .secret-word-box { background: #0f172a; padding: 10px 20px; border-radius: 15px; border: 2px dashed #facc15; display: inline-block; margin-top: 10px;}
+        .secret-word { font-size: 2.5rem; font-weight: 900; color: #facc15; letter-spacing: 2px; margin: 0;}
+        .top-info { position: absolute; top: 15px; left: 15px; right: 15px; display: flex; justify-content: space-between; font-size: 1.1rem; color: #94a3b8;}
+
+        /* الساحة الوسطى (مقياس الحرارة والوقت) */
+        .arena { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; position: relative;}
+        
+        .timer-box { font-size: 3rem; font-weight: bold; color: #fff; background: rgba(0,0,0,0.5); padding: 10px 30px; border-radius: 50px; border: 2px solid #475569; margin-bottom: 30px; transition: 0.3s;}
+        .timer-warning { color: #ef4444; border-color: #ef4444; animation: pulseTime 1s infinite alternate;}
+        @keyframes pulseTime { from { transform: scale(1); box-shadow: 0 0 10px #ef4444; } to { transform: scale(1.1); box-shadow: 0 0 30px #ef4444; } }
+
+        /* مقياس الحرارة */
+        .thermometer-container { width: 80px; height: 250px; background: #1e293b; border-radius: 40px; border: 4px solid #334155; position: relative; padding: 5px; display: flex; align-items: flex-end; justify-content: center; box-shadow: inset 0 0 20px rgba(0,0,0,0.8);}
+        .thermo-bulb { width: 100px; height: 100px; background: #334155; border-radius: 50%; position: absolute; bottom: -40px; border: 4px solid #334155; z-index: 2; display: flex; justify-content: center; align-items: center; font-size: 2rem; transition: 0.5s;}
+        .thermo-fill { width: 40px; background: #3b82f6; border-radius: 20px; transition: height 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.8s; height: 10%; z-index: 1;}
+
+        /* حالات الحرارة */
+        .temp-cold .thermo-fill { height: 20%; background: #3b82f6; box-shadow: 0 0 20px #3b82f6;}
+        .temp-cold .thermo-bulb { background: #1d4ed8; border-color: #3b82f6;}
+        
+        .temp-warm .thermo-fill { height: 60%; background: #facc15; box-shadow: 0 0 20px #facc15;}
+        .temp-warm .thermo-bulb { background: #ca8a04; border-color: #facc15;}
+        
+        .temp-hot .thermo-fill { height: 95%; background: #ef4444; box-shadow: 0 0 30px #ef4444;}
+        .temp-hot .thermo-bulb { background: #b91c1c; border-color: #ef4444;}
+
+        .chat-bubble { background: rgba(255,255,255,0.1); padding: 15px 25px; border-radius: 20px; font-size: 1.3rem; max-width: 80%; text-align: center; margin-top: 50px; min-height: 60px; display: flex; align-items: center; justify-content: center; border: 1px solid #475569;}
+
+        /* لوحة التحكم السفلية */
+        .bottom-panel { background: #1e293b; padding: 20px; border-top: 2px solid #334155; display: flex; flex-direction: column; gap: 15px;}
+        
+        /* وضع السؤال */
+        .ask-mode { display: flex; gap: 10px; width: 100%;}
+        .ask-input { flex: 1; padding: 15px; border-radius: 12px; border: 2px solid #475569; background: #0f172a; color: white; font-size: 1.2rem; outline: none;}
+        .ask-input:focus { border-color: #facc15; }
+        .btn-send { padding: 0 30px; background: #10b981; color: white; border: none; border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.2s;}
+        .btn-send:active { transform: scale(0.95); }
+
+        /* وضع التقييم */
+        .eval-mode { display: flex; gap: 10px; width: 100%;}
+        .btn-eval { flex: 1; padding: 15px 0; border: none; border-radius: 12px; font-size: 1.3rem; font-weight: bold; cursor: pointer; transition: 0.2s; color: white;}
+        .btn-eval:active { transform: scale(0.95); }
+        .btn-cold { background: linear-gradient(to bottom, #3b82f6, #1d4ed8); border-bottom: 4px solid #1e3a8a;}
+        .btn-warm { background: linear-gradient(to bottom, #facc15, #ca8a04); color: black; border-bottom: 4px solid #a16207;}
+        .btn-hot { background: linear-gradient(to bottom, #ef4444, #b91c1c); border-bottom: 4px solid #7f1d1d;}
+        .btn-correct { background: linear-gradient(to bottom, #10b981, #047857); border-bottom: 4px solid #064e3b;}
+
+        /* الشاشات المنبثقة */
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(15, 23, 42, 0.95); z-index: 100; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center;}
+        .box { background: #1e293b; padding: 40px; border-radius: 20px; border: 2px solid #475569; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 400px;}
+        .pin-text { font-size: 4rem; color: #facc15; font-family: monospace; font-weight: 900; letter-spacing: 5px; margin: 10px 0;}
+        .btn-start { width: 100%; padding: 15px; font-size: 1.5rem; font-weight: bold; background: #ef4444; color: white; border: none; border-radius: 12px; cursor: pointer; margin-top: 20px;}
+    </style>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyB5CobIKfYdAz8jaabJpMQrGoqS9Ton28Y", authDomain: "buttons-f3501.firebaseapp.com", databaseURL: "https://buttons-f3501-default-rtdb.firebaseio.com", projectId: "buttons-f3501" };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const pin = urlParams.get('pin');
+        let myName = urlParams.get('name');
+        const isHost = urlParams.get('role') === 'host';
+
+        const myId = "p_" + Date.now();
+        const roomRef = ref(db, `hotcold/${pin}`);
+        const stateRef = ref(db, `hotcold/${pin}/state`);
+        const playersRef = ref(db, `hotcold/${pin}/players`);
+
+        // قاعدة بيانات الكلمات السرية (منوعة وصعبة)
+        const WORDS = ["سيارة كامري", "أريكة (كنب)", "مكيف هواء", "برج إيفل", "بيتزا", "شاحن جوال", "نظارة شمسية", "فرشاة أسنان", "ثلاجة", "طائرة هليكوبتر", "أسد", "فنجان قهوة", "ساعة حائط", "جواز سفر", "سجادة صلاة", "تلفزيون", "ميكروويف", "دراجة نارية", "قلم رصاص", "شجرة نخل"];
+
+        let gameState = { status: 'lobby' };
+        let players = {};
+        let myPlayer = { name: myName, questionsAsked: 0 };
+        let opponentId = null;
+        let timerInterval;
+
+        get(ref(db, `hotcold/${pin}/players/${myId}`)).then((snap) => {
+            if (!snap.exists()) set(ref(db, `hotcold/${pin}/players/${myId}`), myPlayer);
+            else myName = snap.val().name;
+        });
+
+        onValue(playersRef, snap => { 
+            players = snap.val() || {}; 
+            myPlayer = players[myId] || myPlayer;
+            opponentId = Object.keys(players).find(id => id !== myId);
+            renderUI(); 
+        });
+
+        onValue(stateRef, snap => { 
+            gameState = snap.val() || { status: 'lobby' }; 
+            manageTimer();
+            renderUI(); 
+        });
+
+        // بدء اللعبة وتوزيع الكلمات (للهوست)
+        window.startGame = async () => {
+            const pIds = Object.keys(players);
+            if (pIds.length !== 2) return alert("يجب أن يتواجد لاعبان اثنان بالضبط لبدء التحدي!");
+
+            let shuffled = [...WORDS].sort(() => 0.5 - Math.random());
+            let updates = {};
+            updates[`hotcold/${pin}/players/${pIds[0]}/secret`] = shuffled[0];
+            updates[`hotcold/${pin}/players/${pIds[0]}/questionsAsked`] = 0;
+            updates[`hotcold/${pin}/players/${pIds[1]}/secret`] = shuffled[1];
+            updates[`hotcold/${pin}/players/${pIds[1]}/questionsAsked`] = 0;
+
+            updates[`hotcold/${pin}/state`] = { 
+                status: 'playing', 
+                currentTurn: pIds[0], // الأول يبدأ
+                phase: 'asking', // يسأل أولاً
+                currentQuestion: '',
+                lastEval: 'none',
+                deadline: Date.now() + 30000 // 30 ثانية
+            };
+
+            await update(ref(db), updates);
+        };
+
+        // إرسال السؤال
+        window.sendQuestion = async () => {
+            const q = document.getElementById('questionInput').value.trim();
+            if (!q) return;
+
+            await update(stateRef, {
+                phase: 'evaluating',
+                currentQuestion: q,
+                deadline: Date.now() + 30000 // 30 ثانية للخصم لكي يُقيّم
+            });
+            await update(ref(db, `hotcold/${pin}/players/${myId}`), {
+                questionsAsked: (myPlayer.questionsAsked || 0) + 1
+            });
+            document.getElementById('questionInput').value = '';
+        };
+
+        // إرسال التقييم من الخصم
+        window.sendEval = async (evalType) => {
+            if (evalType === 'correct') {
+                await update(stateRef, {
+                    status: 'game_over',
+                    winnerId: opponentId,
+                    winnerName: players[opponentId].name,
+                    winnerWord: players[opponentId].secret
+                });
+                return;
+            }
+
+            // تبديل الدور بعد التقييم
+            await update(stateRef, {
+                currentTurn: myId, // الدور ينتقل للمُقيّم ليسأل
+                phase: 'asking',
+                currentQuestion: '',
+                lastEval: evalType, // لتغيير شكل الترمومتر
+                deadline: Date.now() + 30000
+            });
+        };
+
+        // إدارة المؤقت المرئي والتلقائي
+        function manageTimer() {
+            clearInterval(timerInterval);
+            if (gameState.status !== 'playing' || !gameState.deadline) return;
+
+            timerInterval = setInterval(() => {
+                let timeLeft = Math.max(0, Math.ceil((gameState.deadline - Date.now()) / 1000));
+                const timerEl = document.getElementById('timerDisplay');
+                if(timerEl) {
+                    timerEl.innerText = timeLeft;
+                    if (timeLeft <= 5) timerEl.classList.add('timer-warning');
+                    else timerEl.classList.remove('timer-warning');
+                }
+
+                // إذا انتهى الوقت وأنا صاحب الدور
+                if (timeLeft === 0 && ((gameState.phase === 'asking' && gameState.currentTurn === myId) || (gameState.phase === 'evaluating' && gameState.currentTurn === opponentId))) {
+                    clearInterval(timerInterval);
+                    autoPassTurn();
+                }
+            }, 1000);
+        }
+
+        // عقوبة انتهاء الوقت (انتقال الدور)
+        async function autoPassTurn() {
+            if (gameState.phase === 'asking') {
+                // لم يسأل، ينتقل الدور للخصم
+                await update(stateRef, { currentTurn: opponentId, phase: 'asking', currentQuestion: '', deadline: Date.now() + 30000 });
+            } else {
+                // لم يقيّم، يعتبر التقييم بارد وينتقل الدور
+                await update(stateRef, { currentTurn: opponentId, phase: 'asking', currentQuestion: '', lastEval: 'cold', deadline: Date.now() + 30000 });
+            }
+        }
+
+        function renderUI() {
+            document.getElementById('pinDisplay').innerText = pin;
+            
+            const overlay = document.getElementById('overlay');
+            if (gameState.status === 'lobby') {
+                overlay.style.display = 'flex';
+                let pCount = Object.keys(players).length;
+                overlay.innerHTML = `
+                    <div class="box">
+                        <h2 style="color:#94a3b8; margin:0;">كود الغرفة:</h2>
+                        <div class="pin-text">${pin}</div>
+                        <p style="font-size:1.2rem;">اللاعبون: ${pCount} / 2</p>
+                        ${isHost ? `<button class="btn-start" onclick="startGame()" ${pCount !== 2 ? 'disabled style="opacity:0.5"' : ''}>🚀 بدء التحدي</button>` : '<p style="color:#facc15;">في انتظار الهوست...</p>'}
+                    </div>
+                `;
+                return;
+            }
+
+            if (gameState.status === 'game_over') {
+                overlay.style.display = 'flex';
+                overlay.innerHTML = `
+                    <div class="box" style="border-color:#10b981;">
+                        <h1 style="font-size:4rem; margin:0;">🏆</h1>
+                        <h2 style="color:#10b981; font-size:2rem;">فاز ${gameState.winnerName}!</h2>
+                        <p style="font-size:1.2rem; color:#cbd5e1;">الكلمة كانت: <b style="color:#facc15">${gameState.winnerWord}</b></p>
+                        <p>احتاج إلى ${players[gameState.winnerId].questionsAsked} أسئلة لمعرفتها.</p>
+                        ${isHost ? `<button class="btn-start" onclick="startGame()">🔄 جولة جديدة</button>` : '<p>في انتظار الهوست...</p>'}
+                    </div>
+                `;
+                return;
+            }
+
+            overlay.style.display = 'none';
+
+            // 1. عرض كلمة الخصم في الأعلى
+            if (opponentId && players[opponentId]) {
+                document.getElementById('opponentWord').innerText = players[opponentId].secret;
+                document.getElementById('opponentNameTop').innerText = `كلمة ${players[opponentId].name}:`;
+            }
+
+            // 2. تحديث مقياس الحرارة
+            const thermo = document.getElementById('thermometer');
+            const thermoIcon = document.getElementById('thermoIcon');
+            thermo.className = 'thermometer-container';
+            if (gameState.lastEval === 'cold') { thermo.classList.add('temp-cold'); thermoIcon.innerText = '🧊'; }
+            else if (gameState.lastEval === 'warm') { thermo.classList.add('temp-warm'); thermoIcon.innerText = '☀️'; }
+            else if (gameState.lastEval === 'hot') { thermo.classList.add('temp-hot'); thermoIcon.innerText = '🔥'; }
+            else { thermoIcon.innerText = '🌡️'; }
+
+            // 3. عرض السؤال في الشات
+            const chatBubble = document.getElementById('chatBubble');
+            if (gameState.currentQuestion) {
+                chatBubble.innerText = `"${gameState.currentQuestion}"`;
+                chatBubble.style.opacity = 1;
+            } else {
+                chatBubble.innerText = "...";
+                chatBubble.style.opacity = 0.3;
+            }
+
+            // 4. التحكم بالأدوار واللوحة السفلية
+            const askMode = document.getElementById('askMode');
+            const evalMode = document.getElementById('evalMode');
+            const turnInfo = document.getElementById('turnInfo');
+            const inputField = document.getElementById('questionInput');
+            const sendBtn = document.getElementById('sendBtn');
+
+            askMode.style.display = 'none';
+            evalMode.style.display = 'none';
+
+            if (gameState.phase === 'asking') {
+                if (gameState.currentTurn === myId) {
+                    turnInfo.innerText = "دورك لتسأل! حاول استنتاج كلمتك:";
+                    askMode.style.display = 'flex';
+                    inputField.disabled = false;
+                    sendBtn.disabled = false;
+                } else {
+                    turnInfo.innerText = `انتظر.. ${players[opponentId]?.name} يفكر في سؤال...`;
+                    askMode.style.display = 'flex';
+                    inputField.disabled = true;
+                    sendBtn.disabled = true;
+                    inputField.placeholder = "جاري الكتابة...";
+                }
+            } else if (gameState.phase === 'evaluating') {
+                if (gameState.currentTurn === opponentId) { // الخصم سأل، أنا أقيّم
+                    turnInfo.innerText = `قيّم سؤال ${players[opponentId]?.name} بناءً على كلمته!`;
+                    evalMode.style.display = 'flex';
+                } else { // أنا سألت، أنتظر التقييم
+                    turnInfo.innerText = `في انتظار تقييم ${players[opponentId]?.name}...`;
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="top-info">
+            <span>الغرفة: <span id="pinDisplay">--</span></span>
+            <span>🤫 لا تخبره!</span>
+        </div>
+        <div style="color: #94a3b8; font-size: 1.1rem; margin-top: 15px;" id="opponentNameTop">كلمة الخصم:</div>
+        <div class="secret-word-box">
+            <h1 class="secret-word" id="opponentWord">؟ ؟ ؟</h1>
+        </div>
+    </div>
+
+    <div class="arena">
+        <div class="timer-box" id="timerDisplay">30</div>
+        
+        <div class="thermometer-container" id="thermometer">
+            <div class="thermo-fill"></div>
+            <div class="thermo-bulb" id="thermoIcon">🌡️</div>
+        </div>
+
+        <div class="chat-bubble" id="chatBubble">...</div>
+    </div>
+
+    <div class="bottom-panel">
+        <div style="text-align: center; color: #facc15; font-size: 1.2rem; font-weight: bold; margin-bottom: 5px;" id="turnInfo">جاري التحميل...</div>
+        
+        <div class="ask-mode" id="askMode">
+            <input type="text" class="ask-input" id="questionInput" placeholder="مثال: هل يستخدم في المطبخ؟" autocomplete="off">
+            <button class="btn-send" id="sendBtn" onclick="sendQuestion()">إرسال</button>
+        </div>
+
+        <div class="eval-mode" id="evalMode">
+            <button class="btn-eval btn-cold" onclick="sendEval('cold')">🧊 بارد</button>
+            <button class="btn-eval btn-warm" onclick="sendEval('warm')">☀️ دافئ</button>
+            <button class="btn-eval btn-hot" onclick="sendEval('hot')">🔥 حار</button>
+            <button class="btn-eval btn-correct" onclick="sendEval('correct')">🏆 صح!</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+
+</body>
+</html>

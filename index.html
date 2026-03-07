@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>حار بارد - البوابة</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-image: linear-gradient(135deg, #1e3a8a 0%, #7f1d1d 100%);}
+        .container { background: rgba(15, 23, 42, 0.9); padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 2px solid #334155; width: 90%; max-width: 400px; backdrop-filter: blur(10px);}
+        h1 { margin-bottom: 5px; font-size: 3rem; text-transform: uppercase; letter-spacing: 2px; display: flex; justify-content: center; gap: 10px;}
+        h1 .hot { color: #ef4444; text-shadow: 0 0 15px rgba(239, 68, 68, 0.8);}
+        h1 .cold { color: #3b82f6; text-shadow: 0 0 15px rgba(59, 130, 246, 0.8);}
+        p { color: #cbd5e1; margin-bottom: 30px; font-size: 1.1rem;}
+        input { width: 100%; padding: 15px; font-size: 1.2rem; text-align: center; border-radius: 10px; border: 2px solid #475569; background: #0f172a; color: white; margin-bottom: 15px; outline: none; transition: 0.3s;}
+        input:focus { border-color: #facc15; }
+        .btn { display: block; width: 100%; padding: 15px; margin-bottom: 15px; border: none; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer; color: white; transition: transform 0.2s;}
+        .btn:active { transform: scale(0.95); }
+        .btn-host { background: linear-gradient(135deg, #ef4444, #991b1b); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);}
+        .btn-player { background: linear-gradient(135deg, #3b82f6, #1d4ed8); border: 1px solid #2563eb;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><span class="hot">حار</span> <span class="cold">بارد</span></h1>
+        <p>تحدي التخمين وقراءة الأفكار 🧠</p>
+        
+        <input type="text" id="nameInput" placeholder="اكتب اسمك..." maxlength="12">
+        
+        <div style="border-top: 1px solid #334155; margin: 20px 0; padding-top: 20px;">
+            <input type="number" id="pinInput" placeholder="كود الغرفة (للدخول)" inputmode="numeric" pattern="[0-9]*">
+            <button class="btn btn-player" onclick="joinRoom()">❄️ دخول تحدي قائم</button>
+        </div>
+
+        <button class="btn btn-host" onclick="createRoom()" style="margin-top: 10px;">🔥 إنشاء تحدي جديد</button>
+    </div>
+
+    <script>
+        function getName() {
+            const name = document.getElementById('nameInput').value.trim();
+            if (!name) { alert("يجب إدخال اسمك!"); return null; }
+            return name;
+        }
+        function createRoom() {
+            const name = getName();
+            if (!name) return;
+            const pin = Math.floor(1000 + Math.random() * 9000);
+            window.location.href = `game.html?pin=${pin}&name=${encodeURIComponent(name)}&role=host`;
+        }
+        function joinRoom() {
+            const name = getName();
+            if (!name) return;
+            const pin = document.getElementById('pinInput').value;
+            if (pin.length === 4) {
+                window.location.href = `game.html?pin=${pin}&name=${encodeURIComponent(name)}`;
+            } else {
+                alert("رقم الغرفة غير صحيح!");
+            }
+        }
+    </script>
+</body>
+</html>
