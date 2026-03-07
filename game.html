@@ -4,74 +4,467 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>حار بارد - الطاولة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; }
-        body { background-color: #0f172a; color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; background-image: radial-gradient(circle at center, #1e293b 0%, #020617 100%);}
+        :root {
+            --hot: #ff3b1e;
+            --cold: #2dd4ff;
+            --warm: #fbbf24;
+            --green: #10b981;
+            --bg: #060b12;
+            --surface: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.08);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-        /* --- اللوبي --- */
-        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(2, 6, 23, 0.95); z-index: 100; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; backdrop-filter: blur(10px);}
-        .box { background: #1e293b; padding: 40px; border-radius: 20px; border: 2px solid #475569; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 400px;}
-        .pin-text { font-size: 4.5rem; color: #facc15; font-family: monospace; font-weight: 900; letter-spacing: 8px; margin: 10px 0; text-shadow: 0 0 20px rgba(250, 204, 21, 0.4);}
-        .btn-start { width: 100%; padding: 15px; font-size: 1.5rem; font-weight: bold; background: linear-gradient(135deg, #10b981, #047857); color: white; border: none; border-radius: 12px; cursor: pointer; margin-top: 20px; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4); transition: 0.2s;}
-        .btn-start:active { transform: scale(0.95); }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg);
+            color: white;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
 
-        /* --- ساحة اللعب (طاولة متقابلة) --- */
-        .game-arena { flex: 1; display: flex; flex-direction: column; position: relative;}
-        
-        /* تصميم اللاعب واللوحة */
-        .player-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 20px; transition: 0.3s;}
-        .active-turn { background: radial-gradient(circle, rgba(250, 204, 21, 0.1) 0%, transparent 70%); }
-        
-        .avatar-wrap { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; background: rgba(0,0,0,0.4); padding: 5px 20px 5px 5px; border-radius: 50px; border: 1px solid #334155;}
-        .avatar { width: 50px; height: 50px; background: #334155; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; border: 2px solid #64748b;}
-        .p-name { font-size: 1.2rem; font-weight: bold; color: #cbd5e1;}
-        
-        /* مؤشر الدور (المايكروفون) */
-        .turn-badge { position: absolute; right: 20px; top: 20px; background: #facc15; color: black; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 1rem; box-shadow: 0 0 15px rgba(250, 204, 21, 0.5); animation: pulseBadge 1.5s infinite alternate; display: none;}
-        @keyframes pulseBadge { from { transform: scale(1); } to { transform: scale(1.1); } }
-        .active-turn .turn-badge { display: block; }
+        /* ====== خلفية حية ====== */
+        .ambient-bg {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            transition: all 1s ease;
+        }
+        .ambient-bg.state-cold {
+            background: radial-gradient(ellipse at 50% 50%, rgba(45,212,255,0.08) 0%, transparent 70%);
+        }
+        .ambient-bg.state-hot {
+            background: radial-gradient(ellipse at 50% 50%, rgba(255,59,30,0.12) 0%, transparent 70%);
+        }
+        .ambient-bg.state-warm {
+            background: radial-gradient(ellipse at 50% 50%, rgba(251,191,36,0.1) 0%, transparent 70%);
+        }
+        .ambient-bg.state-neutral {
+            background: radial-gradient(ellipse at 50% 50%, rgba(100,116,139,0.06) 0%, transparent 70%);
+        }
 
-        /* اللوحات الخشبية (البطاقات) */
-        .board-container { perspective: 1000px; width: 80%; max-width: 350px; height: 120px;}
-        .board { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 2.2rem; font-weight: 900; border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.6); position: relative;}
-        
-        /* لوحة الخصم (موجهة لك، تراها واضحة) */
-        .board-front { background: linear-gradient(135deg, #fdfbf7, #e2e8f0); color: #0f172a; border: 5px solid #cbd5e1; transform: rotateX(-5deg); text-shadow: 1px 1px 2px rgba(0,0,0,0.2);}
-        
-        /* لوحتك أنت (ظهرها موجه لك) */
-        .board-back { background: repeating-linear-gradient(45deg, #1e293b, #1e293b 10px, #0f172a 10px, #0f172a 20px); color: #facc15; border: 5px solid #334155; transform: rotateX(5deg); font-size: 4rem; letter-spacing: 5px;}
+        /* ====== الأوفرلاي ====== */
+        .overlay {
+            position: fixed; inset: 0; z-index: 200;
+            display: none; flex-direction: column;
+            justify-content: center; align-items: center;
+            background: rgba(6,11,18,0.92);
+            backdrop-filter: blur(20px);
+        }
+        .overlay-card {
+            background: rgba(15,23,42,0.95);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 44px 36px;
+            width: 90%; max-width: 380px;
+            text-align: center;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.8);
+            animation: cardPop 0.5s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        @keyframes cardPop {
+            from { opacity:0; transform: scale(0.88) translateY(20px); }
+            to { opacity:1; transform: scale(1) translateY(0); }
+        }
 
-        /* --- خط المنتصف والترمومتر --- */
-        .table-divider { height: 4px; background: #334155; width: 100%; position: absolute; top: 50%; transform: translateY(-50%); z-index: 1;}
-        .thermometer-wrapper { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 5; background: #0f172a; padding: 10px 20px; border-radius: 30px; border: 3px solid #475569; display: flex; gap: 15px; align-items: center; box-shadow: 0 0 20px rgba(0,0,0,0.8);}
-        .thermo-icon { font-size: 2.5rem; transition: 0.3s;}
-        .thermo-text { font-size: 1.5rem; font-weight: bold; width: 100px; text-align: center; transition: 0.3s;}
+        .pin-display {
+            font-size: 4rem; font-weight: 900;
+            font-family: monospace;
+            color: var(--warm);
+            letter-spacing: 10px;
+            margin: 12px 0;
+            text-shadow: 0 0 30px rgba(251,191,36,0.5);
+            animation: pinGlow 2s ease-in-out infinite;
+        }
+        @keyframes pinGlow {
+            0%,100% { text-shadow: 0 0 20px rgba(251,191,36,0.4); }
+            50% { text-shadow: 0 0 40px rgba(251,191,36,0.8), 0 0 60px rgba(251,191,36,0.3); }
+        }
 
-        .temp-cold { color: #3b82f6; text-shadow: 0 0 15px #3b82f6; }
-        .temp-warm { color: #facc15; text-shadow: 0 0 15px #facc15; }
-        .temp-hot { color: #ef4444; text-shadow: 0 0 15px #ef4444; }
-        .temp-none { color: #64748b; }
+        .player-dots {
+            display: flex; justify-content: center; gap: 10px; margin: 16px 0;
+        }
+        .player-dot {
+            width: 12px; height: 12px; border-radius: 50%;
+            background: var(--border); border: 2px solid rgba(255,255,255,0.15);
+            transition: all 0.4s;
+        }
+        .player-dot.joined {
+            background: var(--green);
+            border-color: var(--green);
+            box-shadow: 0 0 12px rgba(16,185,129,0.6);
+            animation: dotPulse 1.5s infinite;
+        }
+        @keyframes dotPulse {
+            0%,100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
 
-        /* --- لوحة التحكم السفلية --- */
-        .bottom-panel { background: #1e293b; padding: 20px; border-top: 3px solid #334155; display: flex; flex-direction: column; gap: 15px; flex-shrink: 0; z-index: 10;}
-        
-        .instruction-text { text-align: center; font-size: 1.2rem; font-weight: bold; color: #cbd5e1; margin-bottom: 5px;}
+        .overlay-label {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.35);
+            margin-bottom: 4px;
+        }
 
-        /* وضع التقييم (يظهر عندما يسأل الخصم) */
-        .eval-mode { display: flex; gap: 10px; width: 100%;}
-        .btn-eval { flex: 1; padding: 15px 0; border: none; border-radius: 12px; font-size: 1.3rem; font-weight: bold; cursor: pointer; transition: 0.2s; color: white;}
-        .btn-eval:active { transform: scale(0.95); }
-        .btn-cold { background: linear-gradient(to bottom, #3b82f6, #1d4ed8); border-bottom: 4px solid #1e3a8a;}
-        .btn-warm { background: linear-gradient(to bottom, #facc15, #ca8a04); color: black; border-bottom: 4px solid #a16207;}
-        .btn-hot { background: linear-gradient(to bottom, #ef4444, #b91c1c); border-bottom: 4px solid #7f1d1d;}
-        .btn-correct { background: linear-gradient(to bottom, #10b981, #047857); border-bottom: 4px solid #064e3b;}
-        
-        /* وضع الانتظار (يظهر عندما يكون دورك للسؤال) */
-        .wait-mode { background: #0f172a; padding: 15px; border-radius: 12px; text-align: center; border: 2px dashed #475569; display: none;}
-        .wait-mode p { margin: 0; font-size: 1.3rem; color: #facc15; font-weight: bold; animation: pulseWait 1.5s infinite alternate;}
-        @keyframes pulseWait { from { opacity: 0.6; } to { opacity: 1; } }
+        .btn-start {
+            width: 100%;
+            padding: 16px;
+            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            border: none;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #10b981, #047857);
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 6px 24px rgba(16,185,129,0.4);
+            transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .btn-start:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(16,185,129,0.5); }
+        .btn-start:active { transform: scale(0.96); }
+        .btn-start:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
 
+        /* ====== ساحة اللعب ====== */
+        .game-arena {
+            flex: 1; display: flex; flex-direction: column;
+            position: relative; z-index: 10; overflow: hidden;
+        }
+
+        /* ====== منطقة اللاعب ====== */
+        .player-zone {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 16px 20px;
+            position: relative;
+            transition: background 0.5s;
+        }
+
+        .player-zone.is-active-turn {
+            background: radial-gradient(circle at 50% 50%, rgba(251,191,36,0.07) 0%, transparent 70%);
+        }
+
+        /* شارة الدور */
+        .turn-badge {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            background: var(--warm);
+            color: #000;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            box-shadow: 0 4px 16px rgba(251,191,36,0.4);
+            animation: badgePop 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+        }
+        .is-active-turn .turn-badge { display: flex; }
+        @keyframes badgePop {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* معلومات اللاعب */
+        .player-info {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 14px;
+        }
+        .avatar {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem;
+            border: 2px solid var(--border);
+            background: rgba(255,255,255,0.06);
+            transition: all 0.3s;
+        }
+        .is-active-turn .avatar {
+            border-color: var(--warm);
+            box-shadow: 0 0 16px rgba(251,191,36,0.4);
+        }
+        .p-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.7);
+            transition: color 0.3s;
+        }
+        .is-active-turn .p-name { color: var(--warm); }
+
+        .score-tag {
+            margin-right: auto;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 3px 10px;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.3);
+        }
+
+        /* بطاقة الكلمة */
+        .word-card {
+            width: 88%; max-width: 320px;
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            text-align: center;
+            padding: 24px 20px;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+            min-height: 100px;
+        }
+
+        .word-card-opp {
+            background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+            color: #0f172a;
+            border: 3px solid #cbd5e1;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.8);
+            font-size: 1.8rem;
+            font-weight: 900;
+            transform: perspective(600px) rotateX(-4deg);
+        }
+        .word-card-opp:hover { transform: perspective(600px) rotateX(-2deg) scale(1.02); }
+
+        .word-card-mine {
+            background: repeating-linear-gradient(
+                -45deg,
+                rgba(30,41,59,0.8),
+                rgba(30,41,59,0.8) 12px,
+                rgba(15,23,42,0.8) 12px,
+                rgba(15,23,42,0.8) 24px
+            );
+            border: 3px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+            font-size: 3rem;
+            color: var(--warm);
+            letter-spacing: 8px;
+            transform: perspective(600px) rotateX(4deg);
+            filter: drop-shadow(0 0 15px rgba(251,191,36,0.3));
+        }
+
+        /* تأثير الوميض عند الحصول على تقييم */
+        @keyframes cardFlash {
+            0% { transform: perspective(600px) rotateX(-4deg) scale(1); }
+            50% { transform: perspective(600px) rotateX(-4deg) scale(1.04); }
+            100% { transform: perspective(600px) rotateX(-4deg) scale(1); }
+        }
+        .flash-anim { animation: cardFlash 0.4s ease; }
+
+        /* ====== الفاصل والترمومتر ====== */
+        .center-divider {
+            position: relative;
+            height: 60px;
+            flex-shrink: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+        }
+        .divider-line {
+            position: absolute;
+            top: 50%; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(to right, transparent, var(--border) 20%, var(--border) 80%, transparent);
+        }
+
+        .thermometer-hub {
+            position: absolute;
+            left: 50%; transform: translateX(-50%);
+            background: rgba(6,11,18,0.9);
+            backdrop-filter: blur(12px);
+            border: 2px solid var(--border);
+            border-radius: 50px;
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 160px;
+            justify-content: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            transition: all 0.5s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        .thermo-emoji {
+            font-size: 1.6rem;
+            transition: all 0.4s;
+        }
+        .thermo-label {
+            font-size: 1.1rem;
+            font-weight: 700;
+            transition: all 0.4s;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .thermo-state-none { border-color: rgba(100,116,139,0.3); }
+        .thermo-state-none .thermo-label { color: #64748b; }
+
+        .thermo-state-cold { border-color: rgba(45,212,255,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(45,212,255,0.2); }
+        .thermo-state-cold .thermo-label { color: var(--cold); text-shadow: 0 0 12px rgba(45,212,255,0.7); }
+
+        .thermo-state-warm { border-color: rgba(251,191,36,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(251,191,36,0.2); }
+        .thermo-state-warm .thermo-label { color: var(--warm); text-shadow: 0 0 12px rgba(251,191,36,0.7); }
+
+        .thermo-state-hot { border-color: rgba(255,59,30,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(255,59,30,0.2); }
+        .thermo-state-hot .thermo-label { color: var(--hot); text-shadow: 0 0 12px rgba(255,59,30,0.7); }
+
+        /* نبضة الترمومتر عند التغيير */
+        @keyframes thermoBounce {
+            0% { transform: translateX(-50%) scale(1); }
+            40% { transform: translateX(-50%) scale(1.12); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+        .thermo-bounce { animation: thermoBounce 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+
+        /* ====== لوحة التحكم السفلية ====== */
+        .bottom-panel {
+            background: rgba(10,15,28,0.97);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            padding: 16px 16px 20px;
+            flex-shrink: 0;
+            z-index: 30;
+        }
+
+        .instruction-bar {
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.55);
+            margin-bottom: 12px;
+            min-height: 24px;
+            transition: all 0.3s;
+        }
+
+        /* أزرار التقييم */
+        .eval-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .btn-eval {
+            padding: 14px 10px;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            color: white;
+            transition: all 0.18s cubic-bezier(0.34,1.56,0.64,1);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            position: relative; overflow: hidden;
+        }
+        .btn-eval::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: rgba(255,255,255,0);
+            transition: background 0.15s;
+        }
+        .btn-eval:hover::before { background: rgba(255,255,255,0.07); }
+        .btn-eval:active { transform: scale(0.93); }
+
+        .btn-cold-eval {
+            background: linear-gradient(145deg, #1d4ed8, #1e3a8a);
+            box-shadow: 0 4px 16px rgba(29,78,216,0.35), inset 0 1px 0 rgba(255,255,255,0.1);
+            border: 1px solid rgba(59,130,246,0.3);
+        }
+        .btn-warm-eval {
+            background: linear-gradient(145deg, #d97706, #92400e);
+            box-shadow: 0 4px 16px rgba(217,119,6,0.35), inset 0 1px 0 rgba(255,255,255,0.1);
+            border: 1px solid rgba(251,191,36,0.3);
+        }
+        .btn-hot-eval {
+            background: linear-gradient(145deg, #dc2626, #7f1d1d);
+            box-shadow: 0 4px 16px rgba(220,38,38,0.35), inset 0 1px 0 rgba(255,255,255,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+        }
+        .btn-correct-eval {
+            grid-column: span 2;
+            background: linear-gradient(145deg, #10b981, #047857);
+            box-shadow: 0 4px 16px rgba(16,185,129,0.35), inset 0 1px 0 rgba(255,255,255,0.1);
+            border: 1px solid rgba(16,185,129,0.3);
+            font-size: 1.15rem;
+        }
+
+        /* وضع الانتظار */
+        .wait-box {
+            background: rgba(255,255,255,0.03);
+            border: 1.5px dashed rgba(251,191,36,0.3);
+            border-radius: 14px;
+            padding: 18px;
+            text-align: center;
+            display: none;
+        }
+        .wait-box p {
+            color: var(--warm);
+            font-size: 1.1rem;
+            font-weight: 600;
+            animation: waitPulse 1.8s ease-in-out infinite;
+        }
+        @keyframes waitPulse {
+            0%,100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* ====== نهاية اللعبة ====== */
+        .winner-crown {
+            font-size: 5rem;
+            display: block;
+            margin-bottom: 12px;
+            animation: crownBounce 0.8s cubic-bezier(0.34,1.56,0.64,1) both;
+        }
+        @keyframes crownBounce {
+            from { transform: scale(0) rotate(-20deg); opacity: 0; }
+            to { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .winner-name {
+            font-size: 2rem; font-weight: 900;
+            color: var(--green);
+            margin-bottom: 8px;
+        }
+        .winner-word {
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 4px;
+        }
+        .winner-word strong { color: var(--warm); }
+        .winner-attempts {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.3);
+            margin-bottom: 24px;
+        }
+
+        /* ====== جسيمات الاحتفال ====== */
+        .confetti-container {
+            position: fixed; inset: 0; pointer-events: none; z-index: 300; overflow: hidden;
+        }
+        .confetti-particle {
+            position: absolute;
+            width: 8px; height: 8px;
+            border-radius: 2px;
+            animation: confettiFall linear forwards;
+        }
+        @keyframes confettiFall {
+            0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* ====== معرف اللوبي ====== */
+        .lobby-title {
+            font-size: 1.4rem; font-weight: 700;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 6px;
+        }
+        .waiting-text {
+            color: var(--warm); font-size: 1.1rem;
+            font-weight: 600;
+            animation: waitPulse 1.8s infinite;
+        }
     </style>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
@@ -90,57 +483,60 @@
         const stateRef = ref(db, `hotcold/${pin}/state`);
         const playersRef = ref(db, `hotcold/${pin}/players`);
 
-        // قاعدة بيانات الكلمات
-        const WORDS = ["سيارة كامري", "أريكة (كنب)", "مكيف هواء", "برج إيفل", "بيتزا", "شاحن جوال", "نظارة شمسية", "فرشاة أسنان", "ثلاجة", "طائرة هليكوبتر", "أسد", "فنجان قهوة", "ساعة حائط", "جواز سفر", "سجادة صلاة", "تلفزيون", "ميكروويف", "دراجة نارية", "قلم رصاص", "شجرة نخل", "مفتاح سيارة", "حذاء رياضي", "مظلة (شمسية)"];
+        const WORDS = ["سيارة كامري","أريكة (كنب)","مكيف هواء","برج إيفل","بيتزا","شاحن جوال","نظارة شمسية","فرشاة أسنان","ثلاجة","طائرة هليكوبتر","أسد","فنجان قهوة","ساعة حائط","جواز سفر","سجادة صلاة","تلفزيون","ميكروويف","دراجة نارية","قلم رصاص","شجرة نخل","مفتاح سيارة","حذاء رياضي","مظلة (شمسية)","حقيبة ظهر","دفتر ملاحظات","ميزان","إبريق شاي","عصير برتقال","حمام سباحة","لوحة مفاتيح"];
 
         let gameState = { status: 'lobby' };
         let players = {};
         let myPlayer = { name: myName, turnCount: 0 };
         let opponentId = null;
+        let lastEvalState = null;
 
         get(ref(db, `hotcold/${pin}/players/${myId}`)).then((snap) => {
             if (!snap.exists()) set(ref(db, `hotcold/${pin}/players/${myId}`), myPlayer);
             else myName = snap.val().name;
         });
 
-        onValue(playersRef, snap => { 
-            players = snap.val() || {}; 
+        onValue(playersRef, snap => {
+            players = snap.val() || {};
             myPlayer = players[myId] || myPlayer;
             opponentId = Object.keys(players).find(id => id !== myId);
-            renderUI(); 
+            renderUI();
         });
 
-        onValue(stateRef, snap => { 
-            gameState = snap.val() || { status: 'lobby' }; 
-            renderUI(); 
+        onValue(stateRef, snap => {
+            const newState = snap.val() || { status: 'lobby' };
+            const prevEval = gameState.lastEval;
+            gameState = newState;
+            if (gameState.lastEval && gameState.lastEval !== prevEval && gameState.lastEval !== 'none') {
+                triggerEvalEffect(gameState.lastEval);
+            }
+            if (gameState.status === 'game_over') {
+                triggerConfetti();
+            }
+            renderUI();
         });
 
         // بدء اللعبة
         window.startGame = async () => {
             const pIds = Object.keys(players);
-            if (pIds.length !== 2) return alert("الرجاء انتظار اللاعب الثاني!");
-
+            if (pIds.length !== 2) return;
             let shuffled = [...WORDS].sort(() => 0.5 - Math.random());
             let updates = {};
             updates[`hotcold/${pin}/players/${pIds[0]}/secret`] = shuffled[0];
             updates[`hotcold/${pin}/players/${pIds[0]}/turnCount`] = 0;
             updates[`hotcold/${pin}/players/${pIds[1]}/secret`] = shuffled[1];
             updates[`hotcold/${pin}/players/${pIds[1]}/turnCount`] = 0;
-
-            updates[`hotcold/${pin}/state`] = { 
-                status: 'playing', 
-                currentGuesser: pIds[0], // اللاعب الذي يجب أن يسأل بصوته
+            updates[`hotcold/${pin}/state`] = {
+                status: 'playing',
+                currentGuesser: pIds[0],
                 lastEval: 'none'
             };
-
             await update(ref(db), updates);
         };
 
         // إرسال التقييم
         window.sendEval = async (evalType) => {
-            // لا أستطيع التقييم إلا إذا كان الخصم هو المُخمن
             if (gameState.currentGuesser !== opponentId) return;
-
             if (evalType === 'correct') {
                 await update(stateRef, {
                     status: 'game_over',
@@ -150,47 +546,94 @@
                 });
                 return;
             }
-
-            // تحديث عدد أسئلة الخصم
             await update(ref(db, `hotcold/${pin}/players/${opponentId}`), {
                 turnCount: (players[opponentId].turnCount || 0) + 1
             });
-
-            // انتقال الدور: المُقيّم يصبح مُخمِناً
             await update(stateRef, {
                 currentGuesser: myId,
                 lastEval: evalType
             });
         };
 
+        // تأثير التقييم
+        function triggerEvalEffect(evalType) {
+            const ambientBg = document.getElementById('ambientBg');
+            const hub = document.getElementById('thermoHub');
+            ambientBg.className = 'ambient-bg';
+            hub.classList.remove('thermo-bounce');
+            void hub.offsetWidth;
+            if (evalType === 'cold') ambientBg.classList.add('state-cold');
+            else if (evalType === 'warm') ambientBg.classList.add('state-warm');
+            else if (evalType === 'hot') ambientBg.classList.add('state-hot');
+            hub.classList.add('thermo-bounce');
+            setTimeout(() => hub.classList.remove('thermo-bounce'), 400);
+        }
+
+        // احتفال بالفوز
+        function triggerConfetti() {
+            const container = document.getElementById('confettiContainer');
+            container.innerHTML = '';
+            const colors = ['#ff3b1e','#2dd4ff','#fbbf24','#10b981','#a855f7','#ec4899'];
+            for (let i = 0; i < 80; i++) {
+                const el = document.createElement('div');
+                el.className = 'confetti-particle';
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                el.style.cssText = `
+                    left:${Math.random()*100}%;
+                    top:-10px;
+                    background:${color};
+                    width:${6+Math.random()*8}px;
+                    height:${6+Math.random()*8}px;
+                    animation-duration:${2+Math.random()*2.5}s;
+                    animation-delay:${Math.random()*1.5}s;
+                    border-radius:${Math.random()>0.5?'50%':'2px'};
+                `;
+                container.appendChild(el);
+            }
+            setTimeout(() => container.innerHTML = '', 5000);
+        }
+
+        // رسم الواجهة
         function renderUI() {
             const overlay = document.getElementById('overlay');
-            
-            // --- اللوبي ---
+
+            // ---- اللوبي ----
             if (gameState.status === 'lobby') {
                 overlay.style.display = 'flex';
-                let pCount = Object.keys(players).length;
+                const pCount = Object.keys(players).length;
                 overlay.innerHTML = `
-                    <div class="box">
-                        <h2 style="color:#94a3b8; margin:0;">كود الغرفة:</h2>
-                        <div class="pin-text">${pin}</div>
-                        <p style="font-size:1.2rem;">اللاعبون: ${pCount} / 2</p>
-                        ${isHost ? `<button class="btn-start" onclick="startGame()" ${pCount !== 2 ? 'disabled style="opacity:0.5"' : ''}>🚀 بدء التحدي</button>` : '<p style="color:#facc15; font-size:1.2rem; font-weight:bold;">في انتظار الهوست...</p>'}
+                    <div class="overlay-card">
+                        <div class="overlay-label">كود الغرفة</div>
+                        <div class="pin-display">${pin}</div>
+                        <div class="overlay-label" style="margin-top:12px;">اللاعبون</div>
+                        <div class="player-dots">
+                            <div class="player-dot ${pCount >= 1 ? 'joined' : ''}"></div>
+                            <div class="player-dot ${pCount >= 2 ? 'joined' : ''}"></div>
+                        </div>
+                        <p style="font-size:0.9rem; color:rgba(255,255,255,0.3);">${pCount} / 2 لاعب</p>
+                        ${isHost
+                            ? `<button class="btn-start" onclick="startGame()" ${pCount !== 2 ? 'disabled' : ''}>🚀 ابدأ التحدي!</button>`
+                            : `<p class="waiting-text" style="margin-top:20px;">⏳ في انتظار الهوست للبدء...</p>`
+                        }
                     </div>
                 `;
                 return;
             }
 
-            // --- نهاية اللعبة ---
+            // ---- نهاية اللعبة ----
             if (gameState.status === 'game_over') {
                 overlay.style.display = 'flex';
+                const winnerTurns = players[gameState.winnerId]?.turnCount ?? 0;
                 overlay.innerHTML = `
-                    <div class="box" style="border-color:#10b981;">
-                        <h1 style="font-size:4rem; margin:0;">🏆</h1>
-                        <h2 style="color:#10b981; font-size:2rem;">فاز ${gameState.winnerName}!</h2>
-                        <p style="font-size:1.2rem; color:#cbd5e1;">الكلمة كانت: <b style="color:#facc15">${gameState.winnerWord}</b></p>
-                        <p>احتاج إلى ${players[gameState.winnerId].turnCount + 1} محاولات لمعرفتها.</p>
-                        ${isHost ? `<button class="btn-start" onclick="startGame()">🔄 تحدي جديد</button>` : '<p style="color:#facc15; margin-top:10px;">في انتظار الهوست لجولة جديدة...</p>'}
+                    <div class="overlay-card" style="border-color:rgba(16,185,129,0.4);">
+                        <span class="winner-crown">🏆</span>
+                        <div class="winner-name">فاز ${gameState.winnerName}!</div>
+                        <div class="winner-word">الكلمة كانت: <strong>${gameState.winnerWord}</strong></div>
+                        <div class="winner-attempts">بعد ${winnerTurns + 1} محاولة</div>
+                        ${isHost
+                            ? `<button class="btn-start" onclick="startGame()">🔄 جولة جديدة</button>`
+                            : `<p class="waiting-text">⏳ في انتظار الهوست...</p>`
+                        }
                     </div>
                 `;
                 return;
@@ -198,115 +641,116 @@
 
             overlay.style.display = 'none';
 
-            // --- رسم الطاولة ---
+            // ---- اللعب ----
+            // منطقة الخصم
             if (opponentId && players[opponentId]) {
                 const opp = players[opponentId];
-                document.getElementById('oppName').innerText = opp.name;
-                document.getElementById('oppWord').innerText = opp.secret || '؟؟؟';
-                
-                const oppArea = document.getElementById('oppArea');
-                if (gameState.currentGuesser === opponentId) {
-                    oppArea.classList.add('active-turn');
-                } else {
-                    oppArea.classList.remove('active-turn');
-                }
+                document.getElementById('oppName').textContent = opp.name;
+                document.getElementById('oppWord').textContent = opp.secret || '؟؟؟';
+                document.getElementById('oppScore').textContent = `${opp.turnCount || 0} محاولة`;
+                const oppZone = document.getElementById('oppZone');
+                oppZone.classList.toggle('is-active-turn', gameState.currentGuesser === opponentId);
             }
 
-            document.getElementById('myName').innerText = myName;
-            const myArea = document.getElementById('myArea');
-            if (gameState.currentGuesser === myId) {
-                myArea.classList.add('active-turn');
-            } else {
-                myArea.classList.remove('active-turn');
-            }
+            // منطقة اللاعب الخاص
+            document.getElementById('myName').textContent = myName;
+            document.getElementById('myScore').textContent = `${myPlayer.turnCount || 0} محاولة`;
+            const myZone = document.getElementById('myZone');
+            myZone.classList.toggle('is-active-turn', gameState.currentGuesser === myId);
 
-            // --- تحديث الترمومتر ---
-            const thermoIcon = document.getElementById('thermoIcon');
-            const thermoText = document.getElementById('thermoText');
-            thermoIcon.className = 'thermo-icon';
-            thermoText.className = 'thermo-text';
+            // الترمومتر
+            const hub = document.getElementById('thermoHub');
+            const thermoEmoji = document.getElementById('thermoEmoji');
+            const thermoLabel = document.getElementById('thermoLabel');
+            hub.className = 'thermometer-hub';
 
-            if (gameState.lastEval === 'cold') {
-                thermoIcon.innerText = '🧊'; thermoText.innerText = 'بارد';
-                thermoIcon.classList.add('temp-cold'); thermoText.classList.add('temp-cold');
-            } else if (gameState.lastEval === 'warm') {
-                thermoIcon.innerText = '☀️'; thermoText.innerText = 'دافئ';
-                thermoIcon.classList.add('temp-warm'); thermoText.classList.add('temp-warm');
-            } else if (gameState.lastEval === 'hot') {
-                thermoIcon.innerText = '🔥'; thermoText.innerText = 'حار';
-                thermoIcon.classList.add('temp-hot'); thermoText.classList.add('temp-hot');
-            } else {
-                thermoIcon.innerText = '🌡️'; thermoText.innerText = 'البداية';
-                thermoIcon.classList.add('temp-none'); thermoText.classList.add('temp-none');
-            }
+            const evalMap = {
+                cold:  { cls:'thermo-state-cold', emoji:'🧊', label:'بارد', bg:'state-cold' },
+                warm:  { cls:'thermo-state-warm', emoji:'🌤️', label:'دافئ', bg:'state-warm' },
+                hot:   { cls:'thermo-state-hot',  emoji:'🔥', label:'حار!', bg:'state-hot' },
+                none:  { cls:'thermo-state-none', emoji:'🌡️', label:'البداية', bg:'state-neutral' }
+            };
+            const evalInfo = evalMap[gameState.lastEval] || evalMap.none;
+            hub.classList.add(evalInfo.cls);
+            thermoEmoji.textContent = evalInfo.emoji;
+            thermoLabel.textContent = evalInfo.label;
 
-            // --- لوحة التحكم السفلية ---
-            const evalMode = document.getElementById('evalMode');
-            const waitMode = document.getElementById('waitMode');
+            // الخلفية
+            const ambientBg = document.getElementById('ambientBg');
+            ambientBg.className = 'ambient-bg ' + evalInfo.bg;
+
+            // لوحة التحكم
+            const evalGrid = document.getElementById('evalGrid');
+            const waitBox = document.getElementById('waitBox');
             const instruction = document.getElementById('instruction');
 
             if (gameState.currentGuesser === myId) {
-                // دوري للحديث
-                evalMode.style.display = 'none';
-                waitMode.style.display = 'block';
-                instruction.innerText = "🎤 تحدث واسأل خصمك عن لوحتك المخفية!";
+                evalGrid.style.display = 'none';
+                waitBox.style.display = 'block';
+                instruction.textContent = '🎤 اسأل خصمك عن لوحتك المخفية!';
             } else {
-                // دوري للتقييم (الخصم يتحدث)
-                evalMode.style.display = 'flex';
-                waitMode.style.display = 'none';
-                instruction.innerText = `🤔 استمع لسؤال ${players[opponentId]?.name} ثم قيّمه!`;
+                evalGrid.style.display = 'grid';
+                waitBox.style.display = 'none';
+                const oppName = players[opponentId]?.name || 'الخصم';
+                instruction.textContent = `👂 استمع لـ ${oppName} ثم قيّم إجابته`;
             }
         }
     </script>
 </head>
 <body>
 
+    <div class="ambient-bg state-neutral" id="ambientBg"></div>
+    <div class="confetti-container" id="confettiContainer"></div>
     <div class="overlay" id="overlay"></div>
 
     <div class="game-arena">
-        
-        <div class="player-area" id="oppArea">
-            <div class="turn-badge">🎤 يتحدث الآن</div>
-            <div class="avatar-wrap">
+
+        <!-- منطقة الخصم (بالأعلى) -->
+        <div class="player-zone" id="oppZone" style="transform: rotate(180deg);">
+            <div class="turn-badge">🎤 يتكلم</div>
+            <div class="player-info">
                 <div class="avatar">👤</div>
-                <div class="p-name" id="oppName">الخصم</div>
+                <span class="p-name" id="oppName">الخصم</span>
+                <span class="score-tag" id="oppScore">0 محاولة</span>
             </div>
-            <div class="board-container">
-                <div class="board board-front" id="oppWord">؟؟؟</div>
+            <div class="word-card word-card-opp" id="oppWord">؟؟؟</div>
+        </div>
+
+        <!-- الفاصل والترمومتر -->
+        <div class="center-divider">
+            <div class="divider-line"></div>
+            <div class="thermometer-hub thermo-state-none" id="thermoHub">
+                <span class="thermo-emoji" id="thermoEmoji">🌡️</span>
+                <span class="thermo-label" id="thermoLabel">البداية</span>
             </div>
         </div>
 
-        <div class="table-divider"></div>
-        <div class="thermometer-wrapper">
-            <div class="thermo-icon temp-none" id="thermoIcon">🌡️</div>
-            <div class="thermo-text temp-none" id="thermoText">البداية</div>
-        </div>
-
-        <div class="player-area" id="myArea">
-            <div class="turn-badge">🎤 تتحدث الآن</div>
-            <div class="board-container">
-                <div class="board board-back">؟ ؟ ؟</div>
-            </div>
-            <div class="avatar-wrap" style="margin-top: 15px; margin-bottom: 0;">
-                <div class="avatar" style="border-color: #facc15;">👤</div>
-                <div class="p-name" id="myName" style="color: #facc15;">أنت</div>
+        <!-- منطقة اللاعب (بالأسفل) -->
+        <div class="player-zone" id="myZone">
+            <div class="turn-badge">🎤 تتكلم</div>
+            <div class="word-card word-card-mine">؟ ؟ ؟</div>
+            <div class="player-info" style="margin-top: 14px; margin-bottom: 0;">
+                <div class="avatar" style="border-color:var(--warm);">🙋</div>
+                <span class="p-name" id="myName" style="color:var(--warm);">أنت</span>
+                <span class="score-tag" id="myScore">0 محاولة</span>
             </div>
         </div>
 
     </div>
 
+    <!-- لوحة التحكم -->
     <div class="bottom-panel">
-        <div class="instruction-text" id="instruction">جاري التحميل...</div>
-        
-        <div class="eval-mode" id="evalMode">
-            <button class="btn-eval btn-cold" onclick="sendEval('cold')">🧊 بارد</button>
-            <button class="btn-eval btn-warm" onclick="sendEval('warm')">☀️ دافئ</button>
-            <button class="btn-eval btn-hot" onclick="sendEval('hot')">🔥 حار</button>
-            <button class="btn-eval btn-correct" onclick="sendEval('correct')">🏆 الإجابة صحيحة!</button>
+        <div class="instruction-bar" id="instruction">جاري التحميل...</div>
+
+        <div class="eval-grid" id="evalGrid">
+            <button class="btn-eval btn-cold-eval" onclick="sendEval('cold')">🧊 بارد</button>
+            <button class="btn-eval btn-warm-eval" onclick="sendEval('warm')">🌤️ دافئ</button>
+            <button class="btn-eval btn-hot-eval" onclick="sendEval('hot')">🔥 حار</button>
+            <button class="btn-eval btn-correct-eval" onclick="sendEval('correct')">🏆 أصاب! خمّن صح!</button>
         </div>
 
-        <div class="wait-mode" id="waitMode">
-            <p>⏳ في انتظار تقييم الخصم لسؤالك...</p>
+        <div class="wait-box" id="waitBox">
+            <p>⏳ في انتظار تقييم خصمك لسؤالك...</p>
         </div>
     </div>
 
