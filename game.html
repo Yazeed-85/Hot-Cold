@@ -17,16 +17,7 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-        body {
-            font-family: 'Cairo', sans-serif;
-            background: var(--bg);
-            color: white;
-            height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-        }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: white; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
 
         /* ====== خلفية حية ====== */
         .ambient-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; transition: all 1s ease; }
@@ -84,7 +75,14 @@
         /* منطقتي أنا */
         .my-zone { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding: 20px; background: rgba(0,0,0,0.3); border-top: 1px solid var(--border); position: relative; }
         .my-zone.is-active-turn { background: radial-gradient(circle at 50% 100%, rgba(251,191,36,0.15) 0%, transparent 80%); }
-        .word-card-mine { width: 90%; max-width: 350px; min-height: 100px; background: repeating-linear-gradient(-45deg, rgba(30,41,59,0.8), rgba(30,41,59,0.8) 12px, rgba(15,23,42,0.8) 12px, rgba(15,23,42,0.8) 24px); border: 3px solid rgba(255,255,255,0.1); box-shadow: 0 8px 32px rgba(0,0,0,0.5); font-size: 2.5rem; color: var(--warm); letter-spacing: 8px; transform: perspective(600px) rotateX(5deg); }
+        .word-card-mine { width: 90%; max-width: 350px; min-height: 100px; background: repeating-linear-gradient(-45deg, rgba(30,41,59,0.8), rgba(30,41,59,0.8) 12px, rgba(15,23,42,0.8) 12px, rgba(15,23,42,0.8) 24px); border: 3px solid rgba(255,255,255,0.1); box-shadow: 0 8px 32px rgba(0,0,0,0.5); font-size: 2.5rem; color: var(--warm); letter-spacing: 8px; transform: perspective(600px) rotateX(5deg); display: flex; flex-direction: column;}
+        
+        /* وسيلة المساعدة */
+        .hint-btn { margin-top: 10px; background: rgba(251,191,36,0.2); border: 1px solid var(--warm); color: var(--warm); padding: 5px 15px; border-radius: 20px; font-family: 'Cairo'; font-weight: bold; cursor: pointer; animation: pulseHint 2s infinite; display: none; z-index: 15;}
+        .hint-btn:active { transform: scale(0.95); }
+        @keyframes pulseHint { 0%,100% { box-shadow: 0 0 10px rgba(251,191,36,0.2); } 50% { box-shadow: 0 0 20px rgba(251,191,36,0.6); } }
+        
+        .category-display { font-size: 1.2rem; color: white; background: var(--green); padding: 5px 15px; border-radius: 10px; letter-spacing: 0; margin-top: 10px; display: none; box-shadow: 0 0 15px rgba(16,185,129,0.6); text-shadow: none;}
 
         /* ====== الفاصل والترمومتر ====== */
         .center-divider { position: relative; height: 50px; flex-shrink: 0; z-index: 20; display: flex; align-items: center; }
@@ -123,7 +121,6 @@
         .wait-box p { color: var(--warm); font-size: 1.1rem; font-weight: bold; animation: waitPulse 1.5s infinite; margin:0;}
         @keyframes waitPulse { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
 
-        /* أزرار التصويت للتغيير */
         .vote-actions { display: flex; gap: 10px; margin-top: 15px; }
         .btn-vote-yes { flex: 1; background: #10b981; color: white; padding: 10px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
         .btn-vote-no { flex: 1; background: #ef4444; color: white; padding: 10px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
@@ -147,127 +144,35 @@
         const stateRef = ref(db, `hotcold/${pin}/state`);
         const playersRef = ref(db, `hotcold/${pin}/players`);
 
-        // === 📚 مكتبة الكلمات الضخمة المناسبة للاعبين في السعودية ===
+        // === 📚 المكتبة السعودية المخصصة ===
         const WORDS_DB = {
-            cars_models: [
-            "كامري","كورولا","يارس","راف4","افالون","لاندكروزر","برادو","هايلكس",
-            "سوناتا","اكسنت","النترا","ازيرا","كريتا","توسان","سنتافي",
-            "باترول","التيما","مكسيما","صني","اكس تريل",
-            "مازدا3","مازدا6","CX5",
-            "كابرس","ماليبو","تاهو","سلفرادو",
-            "يوكن","سييرا","اكاديا",
-            "اكسبلورر","اكسبديشن","توروس","اف150",
-            "لكزس ES","لكزس LS","لكزس LX","لكزس RX",
-            "مرسيدس C","مرسيدس E","مرسيدس S","مرسيدس G",
-            "بي ام دبليو X5","بي ام دبليو X6","بي ام دبليو الفئة الخامسة",
-            "بورش كايين","بورش باناميرا",
-            "لامبورغيني","فيراري",
-            "دودج تشارجر","دودج تشالنجر",
-            "جيب رانجلر","جيب جراند شيروكي",
-            "تسلا موديل 3","تسلا موديل S"
-            ],
+            cars_models: ["كامري","كورولا","يارس","راف4","افالون","لاندكروزر","برادو","هايلكس","سوناتا","اكسنت","النترا","ازيرا","كريتا","توسان","سنتافي","باترول","التيما","مكسيما","صني","اكس تريل","مازدا3","مازدا6","CX5","كابرس","ماليبو","تاهو","سلفرادو","يوكن","سييرا","اكاديا","اكسبلورر","اكسبديشن","توروس","اف150","لكزس ES","لكزس LS","لكزس LX","لكزس RX","مرسيدس C","مرسيدس E","مرسيدس S","مرسيدس G","بي ام دبليو X5","بي ام دبليو X6","بورش كايين","بورش باناميرا","لامبورغيني","فيراري","دودج تشارجر","دودج تشالنجر","جيب رانجلر","تسلا موديل 3"],
+            car_brands: ["تويوتا","نيسان","هيونداي","كيا","مازدا","هوندا","لكزس","مرسيدس","بي ام دبليو","اودي","شيفروليه","جي ام سي","فورد","دودج","جيب","تسلا","بورش","فيراري","لامبورغيني","رينو","بيجو","ميتسوبيشي","سوبارو","سوزوكي"],
+            food: ["كبسة","مندي","مضغوط","بخاري","شاورما","فلافل","حمص","برجر","بيتزا","باستا","مكرونة","لازانيا","سوشي","رامن","نودلز","بروستد","مسحب","بطاطس مقلية","سمبوسة","كبة","ورق عنب","تبولة","فتوش","مقلوبة","مسخن","سليق","جريش","قرصان","مرقوق","مطازيز","حنيني","كليجا","دونات","كيك","كوكيز","بانكيك","وافل","ايسكريم","تشيزكيك"],
+            fastfood_brands: ["البيك","ماكدونالدز","كنتاكي","هرفي","برجر كنج","هارديز","شاورمر","كودو","صب واي","بيتزا هت","دومينوز","بابا جونز"],
+            companies: ["ارامكو","سابك","stc","موبايلي","زين","الراجحي","الاهلي","الرياض","الانماء","المراعي","نادك","صافولا","نون","امازون","هنقرستيشن","جاهز","مرسول","طلبات","اوبر","كريم"],
+            electronics: ["جوال","ايفون","سامسونج","ايباد","تابلت","لابتوب","ماك بوك","شاشة","تلفزيون","سماعة","ايربودز","شاحن","بطارية","ماوس","كيبورد","كاميرا","درون","بلايستيشن","اكس بوكس","نينتندو","راوتر","مودم","فلاش"],
+            games: ["فيفا","كول اوف ديوتي","فورت نايت","ماينكرافت","جراند ثفت اوتو","قراند","ببجي","روبلوكس","باتلفيلد","فالورانت"],
+            countries: ["السعودية","الامارات","الكويت","قطر","البحرين","عمان","مصر","المغرب","الجزائر","تونس","امريكا","كندا","بريطانيا","فرنسا","المانيا","ايطاليا","اسبانيا","اليابان","كوريا","الصين","الهند"],
+            cities: ["الرياض","جدة","مكة","المدينة","الدمام","الخبر","الظهران","الطائف","ابها","تبوك","بريدة","حائل","نجران","الجبيل","ينبع"],
+            animals: ["اسد","نمر","فهد","فيل","زرافة","قرد","حصان","جمل","غزال","ذئب","ثعلب","كلب","قطة","ارنب","دب","قرش","حوت","دلفين","صقر","نسر","بطريق"],
+            sports: ["كرة القدم","كرة السلة","كرة الطائرة","التنس","الجولف","السباحة","الفورمولا","الملاكمة","المصارعة"],
+            famous_people: ["الملك سلمان","محمد بن سلمان","محمد عبده","عبدالمجيد عبدالله","راشد الماجد","رابح صقر","ماجد المهندس","ناصر القصبي","عبدالله السدحان","رونالدو","ميسي","نيمار","محمد صلاح"],
+            jobs: ["طبيب","مهندس","معلم","طيار","شرطي","عسكري","محامي","مبرمج","محاسب","طباخ","خباز","حلاق","نجار","سباك","رسام","مصور","مخرج","ممثل"]
+        };
 
-            car_brands: [
-            "تويوتا","نيسان","هيونداي","كيا","مازدا","هوندا",
-            "لكزس","مرسيدس","بي ام دبليو","اودي",
-            "شيفروليه","جي ام سي","فورد","دودج",
-            "جيب","تسلا","بورش","فيراري","لامبورغيني",
-            "رينو","بيجو","ميتسوبيشي","سوبارو","سوزوكي"
-            ],
-
-            food: [
-            "كبسة","مندي","مضغوط","بخاري","شاورما","فلافل","حمص",
-            "برجر","بيتزا","باستا","مكرونة","لازانيا",
-            "سوشي","رامن","نودلز",
-            "بروستد","مسحب","بطاطس مقلية",
-            "سمبوسة","كبة","ورق عنب","تبولة","فتوش",
-            "مقلوبة","مسخن","سليق","جريش","قرصان","مرقوق",
-            "مطازيز","حنيني","كليجا",
-            "دونات","كيك","كوكيز","بانكيك","وافل",
-            "ايسكريم","تشيزكيك"
-            ],
-
-            fastfood_brands: [
-            "البيك","ماكدونالدز","كنتاكي","هرفي","برجر كنج",
-            "هارديز","شاورمر","كودو","صب واي",
-            "بيتزا هت","دومينوز","بابا جونز"
-            ],
-
-            companies: [
-            "ارامكو","سابك","stc","موبايلي","زين",
-            "الراجحي","الاهلي","الرياض","الانماء",
-            "المراعي","نادك","صافولا",
-            "نون","امازون","هنقرستيشن","جاهز","مرسول","طلبات",
-            "اوبر","كريم"
-            ],
-
-            electronics: [
-            "جوال","ايفون","سامسونج",
-            "ايباد","تابلت",
-            "لابتوب","ماك بوك",
-            "شاشة","تلفزيون","سماعة",
-            "ايربودز","شاحن","بطارية",
-            "ماوس","كيبورد",
-            "كاميرا","درون",
-            "بلايستيشن","اكس بوكس","نينتندو",
-            "راوتر","مودم","فلاش"
-            ],
-
-            games: [
-            "فيفا","كول اوف ديوتي","فورت نايت","ماينكرافت",
-            "جراند ثفت اوتو","قراند","ببجي",
-            "روبلوكس","باتلفيلد","فالورانت"
-            ],
-
-            countries: [
-            "السعودية","الامارات","الكويت","قطر","البحرين","عمان",
-            "مصر","المغرب","الجزائر","تونس",
-            "امريكا","كندا","بريطانيا","فرنسا","المانيا",
-            "ايطاليا","اسبانيا","اليابان","كوريا","الصين","الهند"
-            ],
-
-            cities: [
-            "الرياض","جدة","مكة","المدينة","الدمام",
-            "الخبر","الظهران","الطائف","ابها","تبوك",
-            "بريدة","حائل","نجران","الجبيل","ينبع"
-            ],
-
-            animals: [
-            "اسد","نمر","فهد","فيل","زرافة","قرد",
-            "حصان","جمل","غزال",
-            "ذئب","ثعلب",
-            "كلب","قطة","ارنب","دب",
-            "قرش","حوت","دلفين",
-            "صقر","نسر","بطريق"
-            ],
-
-            sports: [
-            "كرة القدم","كرة السلة","كرة الطائرة",
-            "التنس","الجولف","السباحة",
-            "الفورمولا","الملاكمة","المصارعة"
-            ],
-
-            famous_people: [
-            "الملك سلمان","محمد بن سلمان",
-            "محمد عبده","عبدالمجيد عبدالله","راشد الماجد",
-            "رابح صقر","ماجد المهندس",
-            "ناصر القصبي","عبدالله السدحان",
-            "رونالدو","ميسي","نيمار","محمد صلاح"
-            ],
-
-            jobs: [
-            "طبيب","مهندس","معلم","طيار",
-            "شرطي","عسكري","محامي",
-            "مبرمج","محاسب",
-            "طباخ","خباز",
-            "حلاق","نجار","سباك",
-            "رسام","مصور","مخرج","ممثل"
-            ]
+        // أسماء التصنيفات بالعربي لوسيلة المساعدة
+        const CATEGORY_LABELS = {
+            cars_models: "موديل سيارة 🚗", car_brands: "شركة سيارات 🏢", food: "أكلة 🍔",
+            fastfood_brands: "مطعم وجبات سريعة 🍟", companies: "شركة أو تطبيق 💼",
+            electronics: "جهاز إلكتروني 📱", games: "لعبة فيديو 🎮", countries: "دولة 🌍",
+            cities: "مدينة 🏙️", animals: "حيوان 🦁", sports: "رياضة ⚽",
+            famous_people: "شخصية مشهورة 👤", jobs: "مهنة أو وظيفة 👨‍⚕️"
         };
 
         let gameState = { status: 'lobby' };
         let players = {};
-        let myPlayer = { name: myName, turnCount: 0 };
+        let myPlayer = { name: myName, turnCount: 0, usedHint: false };
         let timerInterval;
 
         get(ref(db, `hotcold/${pin}/players/${myId}`)).then((snap) => {
@@ -290,11 +195,16 @@
                 triggerEvalEffect(gameState.lastEval);
             }
             
+            // تحقق الهوست من نتائج التصويت لتغيير الكلمات (Reroll)
+            if (isHost && gameState.rerollVote && gameState.rerollVote.active) {
+                checkRerollStatus();
+            }
+
             manageDynamicTimer();
             renderUI();
         });
 
-        // --- إدارة الوقت المتصاعد (Dynamic Timer) ---
+        // --- إدارة الوقت الصارمة (الهوست يتحكم بالوقت لمنع التداخل) ---
         function manageDynamicTimer() {
             clearInterval(timerInterval);
             if (gameState.status !== 'playing' || !gameState.deadline) return;
@@ -309,11 +219,10 @@
                 if (timeLeft <= 5) badgeEl?.classList.add('timer-warning');
                 else badgeEl?.classList.remove('timer-warning');
 
-                // إذا انتهى الوقت
+                // إذا انتهى الوقت، "الهوست فقط" هو من يعطي أمر السحب لضمان عدم تكرار الأوامر!
                 if (timeLeft === 0) {
                     clearInterval(timerInterval);
-                    // يقوم السائل (صاحب الدور) بتمرير دوره آلياً لتجنب التكرار
-                    if (gameState.currentGuesser === myId && !gameState.currentVotes) {
+                    if (isHost) {
                         forcePassTurn();
                     }
                 }
@@ -322,6 +231,8 @@
 
         async function forcePassTurn() {
             const currentGId = gameState.currentGuesser;
+            if(!currentGId) return;
+            
             await update(ref(db, `hotcold/${pin}/players/${currentGId}`), {
                 turnCount: (players[currentGId].turnCount || 0) + 1
             });
@@ -333,19 +244,24 @@
             });
         }
 
-        // حساب الوقت بناءً على أقصى عدد محاولات وصل له أي لاعب
         function calculateNewDeadline() {
             let maxTurns = 0;
             Object.values(players).forEach(p => { if((p.turnCount||0) > maxTurns) maxTurns = p.turnCount; });
             
-            let seconds = 30;
-            if (maxTurns >= 20) seconds = 10;
-            else if (maxTurns >= 10) seconds = 15;
+            let seconds = 30; // البداية (الجولة الأولى)
+            if (maxTurns >= 20) seconds = 10; // الجولة الثالثة
+            else if (maxTurns >= 10) seconds = 15; // الجولة الثانية
             
             return Date.now() + (seconds * 1000);
         }
 
-        // --- نظام تغيير الكلمات (Reroll) ---
+        // --- نظام وسيلة المساعدة (Hint) ---
+        window.useHint = async () => {
+            if (myPlayer.usedHint) return;
+            await update(ref(db, `hotcold/${pin}/players/${myId}`), { usedHint: true });
+        };
+
+        // --- نظام تغيير الكلمات (Reroll) المُصلح ---
         window.requestReroll = async () => {
             await update(stateRef, {
                 rerollVote: { active: true, initiator: myName, votes: { [myId]: 'yes' } }
@@ -354,24 +270,24 @@
 
         window.castRerollVote = async (vote) => {
             await update(ref(db, `hotcold/${pin}/state/rerollVote/votes/${myId}`), vote);
+        };
+
+        async function checkRerollStatus() {
+            let votes = gameState.rerollVote.votes || {};
+            let pIds = Object.keys(players);
             
-            // الهوست يتحقق من النتيجة
-            if (isHost) {
-                const stateSnap = await get(stateRef);
-                const currentVoteData = stateSnap.val().rerollVote;
-                const pIds = Object.keys(players);
-                
-                if (Object.keys(currentVoteData.votes).length === pIds.length) {
-                    let yesCount = Object.values(currentVoteData.votes).filter(v => v === 'yes').length;
-                    if (yesCount > pIds.length / 2) {
-                        distributeWords(); // إعادة التوزيع
-                        await update(stateRef, { rerollVote: null });
-                    } else {
-                        await update(stateRef, { rerollVote: null });
-                    }
+            // إذا صوّت الجميع
+            if (Object.keys(votes).length === pIds.length) {
+                let yesCount = Object.values(votes).filter(v => v === 'yes').length;
+                if (yesCount >= Math.ceil(pIds.length / 2)) {
+                    // الأغلبية وافقت
+                    distributeWords(); 
+                } else {
+                    // الرفض
+                    await update(stateRef, { rerollVote: null });
                 }
             }
-        };
+        }
 
         // --- توزيع الكلمات العبقري ---
         window.distributeWords = async () => {
@@ -383,7 +299,6 @@
 
             pIds.forEach((id) => {
                 let cat;
-                // 85% احتمال أخذ تصنيف فريد، 15% عشوائي تماماً
                 if (Math.random() > 0.15 && categories.length > 0) {
                     let catIdx = Math.floor(Math.random() * categories.length);
                     cat = categories.splice(catIdx, 1)[0];
@@ -395,7 +310,9 @@
                 let word = wordsArr[Math.floor(Math.random() * wordsArr.length)];
 
                 updates[`hotcold/${pin}/players/${id}/secret`] = word;
+                updates[`hotcold/${pin}/players/${id}/category`] = cat;
                 updates[`hotcold/${pin}/players/${id}/turnCount`] = 0;
+                updates[`hotcold/${pin}/players/${id}/usedHint`] = false;
             });
 
             updates[`hotcold/${pin}/state/status`] = 'playing';
@@ -503,7 +420,7 @@
                             <p>تم تسجيل رأيك، ننتظر بقية اللاعبين (${Object.keys(votes).length}/${pIds.length})</p>
                         </div>`;
                 }
-                return; // إيقاف تحديث الواجهة حتى ينتهي التصويت
+                return;
             }
 
             // ---- اللوبي ----
@@ -577,11 +494,29 @@
                 `;
             });
 
-            // ---- رسم منطقتي الخاصة ----
+            // ---- رسم منطقتي الخاصة وميزة المساعدة ----
             document.getElementById('myName').textContent = myName;
             document.getElementById('myScore').textContent = `${myPlayer.turnCount || 0} سؤال`;
             const myZone = document.getElementById('myZone');
             myZone.classList.toggle('is-active-turn', gameState.currentGuesser === myId);
+
+            const hintBtn = document.getElementById('hintBtn');
+            const catDisplay = document.getElementById('myCategoryDisplay');
+
+            // إظهار زر المساعدة بعد 3 محاولات (turnCount >= 2 يعني بدأ السؤال الثالث)
+            if (myPlayer.turnCount >= 3 && !myPlayer.usedHint && gameState.status === 'playing') {
+                hintBtn.style.display = 'block';
+            } else {
+                hintBtn.style.display = 'none';
+            }
+
+            // إظهار التصنيف إذا استُخدمت المساعدة
+            if (myPlayer.usedHint) {
+                catDisplay.innerText = `تصنيفك: ${CATEGORY_LABELS[myPlayer.category] || 'غير معروف'}`;
+                catDisplay.style.display = 'inline-block';
+            } else {
+                catDisplay.style.display = 'none';
+            }
 
             // ---- تحديث الترمومتر الرئيسي ----
             const hub = document.getElementById('thermoHub');
@@ -638,7 +573,7 @@
     <div class="overlay" id="overlay"></div>
 
     <div class="top-tools">
-        <button class="btn-reroll" onclick="requestReroll()">🔁 تغيير الكلمات (غير معروفة)</button>
+        <button class="btn-reroll" onclick="requestReroll()">🔁 تغيير الكلمات (صعبة/غير معروفة)</button>
         <div class="timer-badge" id="timerBadge">
             ⏱️ <span id="timerText">--</span>
         </div>
@@ -657,7 +592,11 @@
 
         <div class="my-zone" id="myZone">
             <div class="turn-badge" style="top:10px; right:10px;">🎤 دورك لتسأل</div>
-            <div class="word-card word-card-mine">؟ ؟ ؟</div>
+            <div class="word-card word-card-mine">
+                ؟ ؟ ؟
+                <button id="hintBtn" class="hint-btn" onclick="useHint()">💡 مساعدة: اكشف تصنيفي!</button>
+                <div id="myCategoryDisplay" class="category-display"></div>
+            </div>
             <div class="player-info" style="margin-top: 15px; margin-bottom: 0;">
                 <div class="avatar" style="border-color:var(--warm);">🙋</div>
                 <span class="p-name" id="myName" style="color:var(--warm);">أنت</span>
