@@ -100,7 +100,7 @@
             position: relative; z-index: 10; overflow: hidden;
         }
 
-        /* منطقة الخصوم (قابلة للتمرير إذا كثر العدد) */
+        /* منطقة الخصوم */
         .opponents-container {
             flex: 1; display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-end;
             gap: 15px; padding: 20px; overflow-y: auto;
@@ -147,6 +147,20 @@
             background: linear-gradient(145deg, #f8fafc, #e2e8f0); color: #0f172a;
             border: 3px solid #cbd5e1; box-shadow: 0 8px 20px rgba(0,0,0,0.4);
             font-size: 1.3rem; font-weight: 900; transform: perspective(600px) rotateX(-5deg);
+        }
+
+        /* --- أيقونة تصويت اللاعب الفردي (الجديدة) --- */
+        .vote-badge {
+            position: absolute; top: -15px; left: -10px;
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem; border: 3px solid #fdfbf7;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.6); z-index: 20;
+            animation: popVote 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+        }
+        @keyframes popVote {
+            from { transform: scale(0) rotate(-45deg); opacity: 0; }
+            to { transform: scale(1) rotate(0deg); opacity: 1; }
         }
 
         /* منطقتي أنا */
@@ -229,7 +243,6 @@
         const stateRef = ref(db, `hotcold/${pin}/state`);
         const playersRef = ref(db, `hotcold/${pin}/players`);
 
-        // قاعدة بيانات ضخمة تناسب اللعب الجماعي
         const WORDS = ["سيارة كامري","أريكة (كنب)","مكيف هواء","برج إيفل","بيتزا","شاحن جوال","نظارة شمسية","فرشاة أسنان","ثلاجة","طائرة هليكوبتر","أسد","فنجان قهوة","ساعة حائط","جواز سفر","سجادة صلاة","تلفزيون","ميكروويف","دراجة نارية","قلم رصاص","شجرة نخل","مفتاح سيارة","حذاء رياضي","مظلة (شمسية)","حقيبة ظهر","دفتر ملاحظات","ميزان","إبريق شاي","عصير برتقال","حمام سباحة","لوحة مفاتيح","طماطم","عنكبوت","كوكب المريخ","غواصة","قرد","بطيخ","برميل ماء","مقص"];
 
         let gameState = { status: 'lobby' };
@@ -252,15 +265,15 @@
             const prevEval = gameState.lastEval;
             gameState = newState;
             
+            // تفعيل نبضة الترمومتر للتقييم الكلي
             if (gameState.lastEval && gameState.lastEval !== prevEval && gameState.lastEval !== 'none') {
                 triggerEvalEffect(gameState.lastEval);
             }
             renderUI();
         });
 
-        // دوال مساعدة لترتيب الأدوار
         function getNextGuesser(currentId) {
-            const pIds = Object.keys(players).sort(); // ترتيب ثابت للجميع
+            const pIds = Object.keys(players).sort();
             const idx = pIds.indexOf(currentId);
             return pIds[(idx + 1) % pIds.length];
         }
@@ -279,19 +292,25 @@
 
             updates[`hotcold/${pin}/state`] = {
                 status: 'playing',
-                currentGuesser: pIds[0], // اللاعب الأول يبدأ
-                lastEval: 'none'
+                currentGuesser: pIds[0],
+                lastEval: 'none',
+                currentVotes: null // تصفير التصويتات
             };
             
             await update(ref(db), updates);
         };
 
+        // --- نظام التقييم بالإجماع ---
         window.sendEval = async (evalType) => {
-            // المستمع (الذي يقيم) يضغط الزر
-            if (gameState.currentGuesser === myId) return; // المخمن لا يقيم نفسه
+            // لا يمكنك تقييم نفسك، ولا يمكنك التقييم مرتين
+            if (gameState.currentGuesser === myId) return; 
+            if (gameState.currentVotes && gameState.currentVotes[myId]) return; 
 
             const currentGId = gameState.currentGuesser;
+            const pCount = Object.keys(players).length;
+            const requiredVotes = pCount - 1; // الجميع عدا السائل
 
+            // إذا ضغط أحد (صح)، يفوز فوراً ولا ننتظر البقية
             if (evalType === 'correct') {
                 await update(stateRef, {
                     status: 'game_over',
@@ -302,16 +321,42 @@
                 return;
             }
 
-            // تحديث محاولات المخمن
-            await update(ref(db, `hotcold/${pin}/players/${currentGId}`), {
-                turnCount: (players[currentGId].turnCount || 0) + 1
-            });
+            // إضافة صوتي الحالي
+            let newVotes = gameState.currentVotes || {};
+            newVotes[myId] = evalType;
 
-            // انتقال الدور للمخمن التالي
-            await update(stateRef, {
-                currentGuesser: getNextGuesser(currentGId),
-                lastEval: evalType
-            });
+            // هل اكتمل التصويت؟
+            if (Object.keys(newVotes).length >= requiredVotes) {
+                // اكتمل! استخراج أعلى تقييم لتلوين الترمومتر به
+                let allVals = Object.values(newVotes);
+                let overallEval = 'cold';
+                if (allVals.includes('hot')) overallEval = 'hot';
+                else if (allVals.includes('warm')) overallEval = 'warm';
+
+                // زيادة عدد المحاولات للسائل
+                await update(ref(db, `hotcold/${pin}/players/${currentGId}`), {
+                    turnCount: (players[currentGId].turnCount || 0) + 1
+                });
+
+                // تحديث الحالة لتظهر جميع الأصوات وتوهج الترمومتر
+                await update(stateRef, {
+                    currentVotes: newVotes,
+                    lastEval: overallEval 
+                });
+
+                // انتظار 3 ثواني ليقرأ الجميع النتائج، ثم ننتقل للسائل التالي
+                setTimeout(async () => {
+                    await update(stateRef, {
+                        currentGuesser: getNextGuesser(currentGId),
+                        currentVotes: null, // تصفير التصويتات للround القادم
+                        lastEval: 'none'
+                    });
+                }, 3000);
+
+            } else {
+                // لم يكتمل التصويت بعد، فقط نحدث قائمة الأصوات
+                await update(stateRef, { currentVotes: newVotes });
+            }
         };
 
         function triggerEvalEffect(evalType) {
@@ -371,14 +416,23 @@
 
             overlay.style.display = 'none';
 
-            // ---- رسم منطقة الخصوم (الجميع عدا أنا) ----
+            // ---- رسم منطقة الخصوم (وإظهار تصويت كل شخص) ----
             const oppContainer = document.getElementById('opponentsContainer');
             oppContainer.innerHTML = '';
             
             pIds.forEach(id => {
-                if (id === myId) return; // تخطي نفسي
+                if (id === myId) return; 
                 const opp = players[id];
                 const isActive = gameState.currentGuesser === id ? 'is-active-turn' : '';
+                
+                // استخراج تصويت هذا اللاعب إن وجد
+                let voteHtml = '';
+                if (gameState.currentVotes && gameState.currentVotes[id]) {
+                    let v = gameState.currentVotes[id];
+                    let vEmoji = v === 'hot' ? '🔥' : (v === 'warm' ? '🌤️' : '🧊');
+                    let vColor = v === 'hot' ? 'var(--hot)' : (v === 'warm' ? 'var(--warm)' : 'var(--cold)');
+                    voteHtml = `<div class="vote-badge" style="background:${vColor}">${vEmoji}</div>`;
+                }
                 
                 oppContainer.innerHTML += `
                     <div class="player-zone ${isActive}">
@@ -388,7 +442,10 @@
                             <span class="p-name">${opp.name}</span>
                             <span class="score-tag">${opp.turnCount || 0} سؤال</span>
                         </div>
-                        <div class="word-card word-card-opp">${opp.secret || '؟؟؟'}</div>
+                        <div class="word-card word-card-opp">
+                            ${voteHtml}
+                            ${opp.secret || '؟؟؟'}
+                        </div>
                     </div>
                 `;
             });
@@ -399,7 +456,7 @@
             const myZone = document.getElementById('myZone');
             myZone.classList.toggle('is-active-turn', gameState.currentGuesser === myId);
 
-            // ---- تحديث الترمومتر ----
+            // ---- تحديث الترمومتر الرئيسي ----
             const hub = document.getElementById('thermoHub');
             const thermoEmoji = document.getElementById('thermoEmoji');
             const thermoLabel = document.getElementById('thermoLabel');
@@ -409,7 +466,7 @@
                 cold:  { cls:'thermo-state-cold', emoji:'🧊', label:'بارد' },
                 warm:  { cls:'thermo-state-warm', emoji:'🌤️', label:'دافئ' },
                 hot:   { cls:'thermo-state-hot',  emoji:'🔥', label:'حار!' },
-                none:  { cls:'thermo-state-none', emoji:'🌡️', label:'البداية' }
+                none:  { cls:'thermo-state-none', emoji:'🌡️', label:'ننتظر' }
             };
             const evalInfo = evalMap[gameState.lastEval] || evalMap.none;
             hub.classList.add(evalInfo.cls);
@@ -421,17 +478,32 @@
             const waitBox = document.getElementById('waitBox');
             const instruction = document.getElementById('instruction');
 
+            const totalVotesNeeded = pIds.length - 1;
+            const currentVotesCount = gameState.currentVotes ? Object.keys(gameState.currentVotes).length : 0;
+
             if (gameState.currentGuesser === myId) {
-                // دوري لأسأل (لا أستطيع التقييم)
+                // أنا السائل، أنتظر إجماع البقية
                 evalGrid.style.display = 'none';
                 waitBox.style.display = 'block';
-                instruction.textContent = '🎤 دورك! اسأل أصدقاءك سؤالاً عن لوحتك';
+                waitBox.innerHTML = `<p>⏳ ننتظر تقييم أصدقائك... (${currentVotesCount}/${totalVotesNeeded})</p>`;
+                instruction.textContent = '🎤 دورك! اسأل أصدقاءك بصوتك عن لوحتك';
             } else {
-                // دور أحد الأصدقاء، نحن جميعاً نستطيع تقييمه
-                evalGrid.style.display = 'grid';
-                waitBox.style.display = 'none';
+                // دور زميل آخر للسؤال
                 const activeName = players[gameState.currentGuesser]?.name || 'زميلك';
-                instruction.innerHTML = `👂 استمع لسؤال <span style="color:var(--warm)">${activeName}</span> وقيمه (أسرع شخص يضغط يُعتمد)!`;
+                let myVote = gameState.currentVotes ? gameState.currentVotes[myId] : null;
+
+                if (myVote) {
+                    // لقد قمت بالتصويت، أنتظر البقية
+                    evalGrid.style.display = 'none';
+                    waitBox.style.display = 'block';
+                    waitBox.innerHTML = `<p>✅ تم تسجيل تقييمك! ننتظر البقية... (${currentVotesCount}/${totalVotesNeeded})</p>`;
+                    instruction.innerHTML = `ننتظر إجماع البقية على سؤال <span style="color:var(--warm)">${activeName}</span>`;
+                } else {
+                    // لم أصوت بعد، يجب أن أقيم
+                    evalGrid.style.display = 'grid';
+                    waitBox.style.display = 'none';
+                    instruction.innerHTML = `👂 استمع لسؤال <span style="color:var(--warm)">${activeName}</span> وقيمه!`;
+                }
             }
         }
     </script>
@@ -443,8 +515,7 @@
 
     <div class="game-arena">
 
-        <div class="opponents-container" id="opponentsContainer">
-            </div>
+        <div class="opponents-container" id="opponentsContainer"></div>
 
         <div class="center-divider">
             <div class="divider-line"></div>
@@ -473,12 +544,10 @@
             <button class="btn-eval btn-cold-eval" onclick="sendEval('cold')">🧊 بارد</button>
             <button class="btn-eval btn-warm-eval" onclick="sendEval('warm')">🌤️ دافئ</button>
             <button class="btn-eval btn-hot-eval" onclick="sendEval('hot')">🔥 حار</button>
-            <button class="btn-eval btn-correct-eval" onclick="sendEval('correct')">🏆 صح! (فاز بالجولة)</button>
+            <button class="btn-eval btn-correct-eval" onclick="sendEval('correct')">🏆 إجابة صحيحة!</button>
         </div>
 
-        <div class="wait-box" id="waitBox">
-            <p>⏳ في انتظار إجابتهم وتقييمهم لسؤالك...</p>
-        </div>
+        <div class="wait-box" id="waitBox"></div>
     </div>
 
 </body>
