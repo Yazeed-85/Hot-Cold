@@ -29,191 +29,90 @@
         }
 
         /* ====== خلفية حية ====== */
-        .ambient-bg {
-            position: fixed; inset: 0; z-index: 0; pointer-events: none;
-            transition: all 1s ease;
-        }
+        .ambient-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; transition: all 1s ease; }
         .ambient-bg.state-cold { background: radial-gradient(ellipse at 50% 50%, rgba(45,212,255,0.08) 0%, transparent 70%); }
         .ambient-bg.state-hot { background: radial-gradient(ellipse at 50% 50%, rgba(255,59,30,0.12) 0%, transparent 70%); }
         .ambient-bg.state-warm { background: radial-gradient(ellipse at 50% 50%, rgba(251,191,36,0.1) 0%, transparent 70%); }
         .ambient-bg.state-neutral { background: radial-gradient(ellipse at 50% 50%, rgba(100,116,139,0.06) 0%, transparent 70%); }
 
-        /* ====== الأوفرلاي (اللوبي والنهاية) ====== */
-        .overlay {
-            position: fixed; inset: 0; z-index: 200;
-            display: none; flex-direction: column;
-            justify-content: center; align-items: center;
-            background: rgba(6,11,18,0.92);
-            backdrop-filter: blur(20px);
-        }
-        .overlay-card {
-            background: rgba(15,23,42,0.95);
-            border: 1px solid var(--border);
-            border-radius: 28px;
-            padding: 44px 36px;
-            width: 90%; max-width: 450px;
-            text-align: center;
-            box-shadow: 0 40px 80px rgba(0,0,0,0.8);
-            animation: cardPop 0.5s cubic-bezier(0.22,1,0.36,1) both;
-        }
-        @keyframes cardPop {
-            from { opacity:0; transform: scale(0.88) translateY(20px); }
-            to { opacity:1; transform: scale(1) translateY(0); }
-        }
+        /* ====== الأوفرلاي واللوحات المنبثقة ====== */
+        .overlay { position: fixed; inset: 0; z-index: 200; display: none; flex-direction: column; justify-content: center; align-items: center; background: rgba(6,11,18,0.92); backdrop-filter: blur(20px); }
+        .overlay-card { background: rgba(15,23,42,0.95); border: 1px solid var(--border); border-radius: 28px; padding: 40px 30px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 40px 80px rgba(0,0,0,0.8); animation: cardPop 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+        @keyframes cardPop { from { opacity:0; transform: scale(0.88) translateY(20px); } to { opacity:1; transform: scale(1) translateY(0); } }
 
-        .pin-display {
-            font-size: 4rem; font-weight: 900;
-            font-family: monospace; color: var(--warm);
-            letter-spacing: 10px; margin: 12px 0;
-            text-shadow: 0 0 30px rgba(251,191,36,0.5);
-            animation: pinGlow 2s ease-in-out infinite;
-        }
-        @keyframes pinGlow {
-            0%,100% { text-shadow: 0 0 20px rgba(251,191,36,0.4); }
-            50% { text-shadow: 0 0 40px rgba(251,191,36,0.8), 0 0 60px rgba(251,191,36,0.3); }
-        }
+        .pin-display { font-size: 4rem; font-weight: 900; font-family: monospace; color: var(--warm); letter-spacing: 10px; margin: 12px 0; text-shadow: 0 0 30px rgba(251,191,36,0.5); animation: pinGlow 2s ease-in-out infinite; }
+        @keyframes pinGlow { 0%,100% { text-shadow: 0 0 20px rgba(251,191,36,0.4); } 50% { text-shadow: 0 0 40px rgba(251,191,36,0.8), 0 0 60px rgba(251,191,36,0.3); } }
 
-        .players-list {
-            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 16px 0;
-        }
-        .player-badge {
-            background: var(--surface); border: 1px solid var(--border);
-            padding: 5px 15px; border-radius: 20px; font-weight: bold;
-        }
+        .player-badge { background: var(--surface); border: 1px solid var(--border); padding: 5px 15px; border-radius: 20px; font-weight: bold; display: inline-block; margin: 5px;}
 
-        .btn-start {
-            width: 100%; padding: 16px; margin-top: 20px;
-            font-size: 1.2rem; font-weight: 700; font-family: 'Cairo', sans-serif;
-            border: none; border-radius: 16px;
-            background: linear-gradient(135deg, #10b981, #047857);
-            color: white; cursor: pointer;
-            box-shadow: 0 6px 24px rgba(16,185,129,0.4);
-            transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
-        }
-        .btn-start:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(16,185,129,0.5); }
-        .btn-start:active { transform: scale(0.96); }
-        .btn-start:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+        .btn-start { width: 100%; padding: 15px; margin-top: 20px; font-size: 1.2rem; font-weight: 700; border: none; border-radius: 16px; background: linear-gradient(135deg, #10b981, #047857); color: white; cursor: pointer; box-shadow: 0 6px 24px rgba(16,185,129,0.4); transition: 0.2s; }
+        .btn-start:active { transform: scale(0.95); }
+        .btn-start:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* ====== شريط الوقت وتغيير الكلمات ====== */
+        .top-tools { position: absolute; top: 15px; left: 15px; right: 15px; display: flex; justify-content: space-between; align-items: center; z-index: 50; }
+        .timer-badge { background: rgba(0,0,0,0.6); border: 2px solid var(--border); padding: 8px 20px; border-radius: 30px; font-size: 1.5rem; font-weight: 900; color: white; display: flex; align-items: center; gap: 10px; transition: 0.3s; }
+        .timer-warning { color: var(--hot); border-color: var(--hot); animation: timePulse 0.5s infinite alternate; text-shadow: 0 0 15px var(--hot); }
+        @keyframes timePulse { from { transform: scale(1); } to { transform: scale(1.1); } }
+        
+        .btn-reroll { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 15px; border-radius: 20px; font-family: 'Cairo'; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-reroll:active { transform: scale(0.9); background: rgba(255,255,255,0.2); }
 
         /* ====== ساحة اللعب ====== */
-        .game-arena {
-            flex: 1; display: flex; flex-direction: column;
-            position: relative; z-index: 10; overflow: hidden;
-        }
+        .game-arena { flex: 1; display: flex; flex-direction: column; position: relative; z-index: 10; overflow: hidden; padding-top: 60px; }
+        .opponents-container { flex: 1; display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-end; gap: 15px; padding: 10px; overflow-y: auto; }
 
-        /* منطقة الخصوم */
-        .opponents-container {
-            flex: 1; display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-end;
-            gap: 15px; padding: 20px; overflow-y: auto;
-        }
+        .player-zone { display: flex; flex-direction: column; align-items: center; padding: 10px; border-radius: 20px; position: relative; transition: background 0.5s; flex: 1 1 40%; max-width: 250px; }
+        .player-zone.is-active-turn { background: radial-gradient(circle at 50% 50%, rgba(251,191,36,0.1) 0%, transparent 80%); border: 1px solid rgba(251,191,36,0.2); }
 
-        .player-zone {
-            display: flex; flex-direction: column; align-items: center;
-            padding: 15px; border-radius: 20px; position: relative;
-            transition: background 0.5s; flex: 1 1 40%; max-width: 250px;
-        }
-        .player-zone.is-active-turn {
-            background: radial-gradient(circle at 50% 50%, rgba(251,191,36,0.1) 0%, transparent 80%);
-            border: 1px solid rgba(251,191,36,0.2);
-        }
-
-        .turn-badge {
-            position: absolute; top: -10px; right: -10px; display: none;
-            background: var(--warm); color: #000; padding: 4px 12px;
-            border-radius: 20px; font-size: 0.8rem; font-weight: 900;
-            box-shadow: 0 4px 16px rgba(251,191,36,0.4);
-            animation: badgePop 0.3s both; z-index: 5;
-        }
+        .turn-badge { position: absolute; top: -10px; right: -10px; display: none; background: var(--warm); color: #000; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 900; box-shadow: 0 4px 16px rgba(251,191,36,0.4); z-index: 5; }
         .is-active-turn .turn-badge { display: block; }
-        @keyframes badgePop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        .player-info {
-            display: flex; align-items: center; gap: 8px; margin-bottom: 10px; width: 100%; justify-content: center;
-        }
-        .avatar {
-            width: 35px; height: 35px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.1rem; border: 2px solid var(--border); background: rgba(255,255,255,0.06);
-        }
+        .player-info { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; width: 100%; justify-content: center; }
+        .avatar { width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 2px solid var(--border); background: rgba(255,255,255,0.06); }
         .is-active-turn .avatar { border-color: var(--warm); box-shadow: 0 0 10px rgba(251,191,36,0.4); }
         .p-name { font-size: 1rem; font-weight: 700; color: rgba(255,255,255,0.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px;}
         .is-active-turn .p-name { color: var(--warm); }
         .score-tag { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 10px; padding: 2px 8px; font-size: 0.75rem; color: rgba(255,255,255,0.4); }
 
-        .word-card {
-            width: 100%; border-radius: 15px; display: flex; align-items: center; justify-content: center;
-            text-align: center; padding: 15px 10px; position: relative; min-height: 80px;
-        }
-        .word-card-opp {
-            background: linear-gradient(145deg, #f8fafc, #e2e8f0); color: #0f172a;
-            border: 3px solid #cbd5e1; box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-            font-size: 1.3rem; font-weight: 900; transform: perspective(600px) rotateX(-5deg);
-        }
-
-        /* --- أيقونة تصويت اللاعب الفردي (الجديدة) --- */
-        .vote-badge {
-            position: absolute; top: -15px; left: -10px;
-            width: 40px; height: 40px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.3rem; border: 3px solid #fdfbf7;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.6); z-index: 20;
-            animation: popVote 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
-        }
-        @keyframes popVote {
-            from { transform: scale(0) rotate(-45deg); opacity: 0; }
-            to { transform: scale(1) rotate(0deg); opacity: 1; }
-        }
+        .word-card { width: 100%; border-radius: 15px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 15px 10px; position: relative; min-height: 80px; }
+        .word-card-opp { background: linear-gradient(145deg, #f8fafc, #e2e8f0); color: #0f172a; border: 3px solid #cbd5e1; box-shadow: 0 8px 20px rgba(0,0,0,0.4); font-size: 1.4rem; font-weight: 900; transform: perspective(600px) rotateX(-5deg); }
+        
+        .vote-badge { position: absolute; top: -15px; left: -10px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; border: 3px solid #fdfbf7; box-shadow: 0 5px 15px rgba(0,0,0,0.6); z-index: 20; animation: popVote 0.4s both; }
+        @keyframes popVote { from { transform: scale(0) rotate(-45deg); opacity: 0; } to { transform: scale(1) rotate(0deg); opacity: 1; } }
 
         /* منطقتي أنا */
-        .my-zone {
-            flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
-            padding: 20px; background: rgba(0,0,0,0.3); border-top: 1px solid var(--border);
-            position: relative;
-        }
+        .my-zone { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding: 20px; background: rgba(0,0,0,0.3); border-top: 1px solid var(--border); position: relative; }
         .my-zone.is-active-turn { background: radial-gradient(circle at 50% 100%, rgba(251,191,36,0.15) 0%, transparent 80%); }
-        .word-card-mine {
-            width: 90%; max-width: 350px; min-height: 100px;
-            background: repeating-linear-gradient(-45deg, rgba(30,41,59,0.8), rgba(30,41,59,0.8) 12px, rgba(15,23,42,0.8) 12px, rgba(15,23,42,0.8) 24px);
-            border: 3px solid rgba(255,255,255,0.1); box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-            font-size: 2.5rem; color: var(--warm); letter-spacing: 8px;
-            transform: perspective(600px) rotateX(5deg);
-        }
+        .word-card-mine { width: 90%; max-width: 350px; min-height: 100px; background: repeating-linear-gradient(-45deg, rgba(30,41,59,0.8), rgba(30,41,59,0.8) 12px, rgba(15,23,42,0.8) 12px, rgba(15,23,42,0.8) 24px); border: 3px solid rgba(255,255,255,0.1); box-shadow: 0 8px 32px rgba(0,0,0,0.5); font-size: 2.5rem; color: var(--warm); letter-spacing: 8px; transform: perspective(600px) rotateX(5deg); }
 
         /* ====== الفاصل والترمومتر ====== */
         .center-divider { position: relative; height: 50px; flex-shrink: 0; z-index: 20; display: flex; align-items: center; }
         .divider-line { position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: linear-gradient(to right, transparent, var(--border) 20%, var(--border) 80%, transparent); }
-        .thermometer-hub {
-            position: absolute; left: 50%; transform: translateX(-50%); background: rgba(6,11,18,0.95);
-            backdrop-filter: blur(12px); border: 2px solid var(--border); border-radius: 50px;
-            padding: 5px 20px; display: flex; align-items: center; gap: 10px; min-width: 140px; justify-content: center;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.8); transition: all 0.5s;
-        }
+        .thermometer-hub { position: absolute; left: 50%; transform: translateX(-50%); background: rgba(6,11,18,0.95); backdrop-filter: blur(12px); border: 2px solid var(--border); border-radius: 50px; padding: 5px 20px; display: flex; align-items: center; gap: 10px; min-width: 140px; justify-content: center; box-shadow: 0 8px 32px rgba(0,0,0,0.8); transition: all 0.5s; }
         .thermo-emoji { font-size: 1.5rem; transition: all 0.4s; }
         .thermo-label { font-size: 1rem; font-weight: 900; transition: all 0.4s; text-align: center; }
 
         .thermo-state-none { border-color: rgba(100,116,139,0.3); }
         .thermo-state-none .thermo-label { color: #64748b; }
-        .thermo-state-cold { border-color: rgba(45,212,255,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(45,212,255,0.2); }
+        .thermo-state-cold { border-color: rgba(45,212,255,0.4); box-shadow: 0 0 20px rgba(45,212,255,0.2); }
         .thermo-state-cold .thermo-label { color: var(--cold); text-shadow: 0 0 12px rgba(45,212,255,0.7); }
-        .thermo-state-warm { border-color: rgba(251,191,36,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(251,191,36,0.2); }
+        .thermo-state-warm { border-color: rgba(251,191,36,0.4); box-shadow: 0 0 20px rgba(251,191,36,0.2); }
         .thermo-state-warm .thermo-label { color: var(--warm); text-shadow: 0 0 12px rgba(251,191,36,0.7); }
-        .thermo-state-hot { border-color: rgba(255,59,30,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(255,59,30,0.2); }
+        .thermo-state-hot { border-color: rgba(255,59,30,0.4); box-shadow: 0 0 20px rgba(255,59,30,0.2); }
         .thermo-state-hot .thermo-label { color: var(--hot); text-shadow: 0 0 12px rgba(255,59,30,0.7); }
+        .thermo-state-timeout { border-color: #a855f7; box-shadow: 0 0 20px rgba(168,85,247,0.3); }
+        .thermo-state-timeout .thermo-label { color: #a855f7; text-shadow: 0 0 12px rgba(168,85,247,0.7); }
 
-        @keyframes thermoBounce { 0%,100% { transform: translateX(-50%) scale(1); } 40% { transform: translateX(-50%) scale(1.15); } }
         .thermo-bounce { animation: thermoBounce 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+        @keyframes thermoBounce { 0%,100% { transform: translateX(-50%) scale(1); } 40% { transform: translateX(-50%) scale(1.15); } }
 
         /* ====== لوحة التحكم السفلية ====== */
-        .bottom-panel {
-            background: rgba(10,15,28,0.97); border-top: 1px solid var(--border);
-            padding: 15px; flex-shrink: 0; z-index: 30;
-        }
+        .bottom-panel { background: rgba(10,15,28,0.97); border-top: 1px solid var(--border); padding: 15px; flex-shrink: 0; z-index: 30; }
         .instruction-bar { text-align: center; font-size: 1.1rem; font-weight: 700; color: #cbd5e1; margin-bottom: 12px; }
 
         .eval-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-eval {
-            padding: 12px 5px; border: none; border-radius: 12px; font-size: 1.05rem; font-weight: 900;
-            font-family: 'Cairo', sans-serif; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
+        .btn-eval { padding: 12px 5px; border: none; border-radius: 12px; font-size: 1.05rem; font-weight: 900; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-eval:active { transform: scale(0.95); }
         .btn-cold-eval { background: linear-gradient(145deg, #1d4ed8, #1e3a8a); border-bottom: 4px solid #172554;}
         .btn-warm-eval { background: linear-gradient(145deg, #d97706, #92400e); border-bottom: 4px solid #713f12;}
@@ -223,6 +122,11 @@
         .wait-box { background: rgba(255,255,255,0.03); border: 2px dashed rgba(251,191,36,0.3); border-radius: 14px; padding: 15px; text-align: center; display: none; }
         .wait-box p { color: var(--warm); font-size: 1.1rem; font-weight: bold; animation: waitPulse 1.5s infinite; margin:0;}
         @keyframes waitPulse { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+
+        /* أزرار التصويت للتغيير */
+        .vote-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-vote-yes { flex: 1; background: #10b981; color: white; padding: 10px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .btn-vote-no { flex: 1; background: #ef4444; color: white; padding: 10px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
 
     </style>
     <script type="module">
@@ -243,11 +147,128 @@
         const stateRef = ref(db, `hotcold/${pin}/state`);
         const playersRef = ref(db, `hotcold/${pin}/players`);
 
-        const WORDS = ["سيارة كامري","أريكة (كنب)","مكيف هواء","برج إيفل","بيتزا","شاحن جوال","نظارة شمسية","فرشاة أسنان","ثلاجة","طائرة هليكوبتر","أسد","فنجان قهوة","ساعة حائط","جواز سفر","سجادة صلاة","تلفزيون","ميكروويف","دراجة نارية","قلم رصاص","شجرة نخل","مفتاح سيارة","حذاء رياضي","مظلة (شمسية)","حقيبة ظهر","دفتر ملاحظات","ميزان","إبريق شاي","عصير برتقال","حمام سباحة","لوحة مفاتيح","طماطم","عنكبوت","كوكب المريخ","غواصة","قرد","بطيخ","برميل ماء","مقص"];
+        // === 📚 مكتبة الكلمات الضخمة المناسبة للاعبين في السعودية ===
+        const WORDS_DB = {
+            cars_models: [
+            "كامري","كورولا","يارس","راف4","افالون","لاندكروزر","برادو","هايلكس",
+            "سوناتا","اكسنت","النترا","ازيرا","كريتا","توسان","سنتافي",
+            "باترول","التيما","مكسيما","صني","اكس تريل",
+            "مازدا3","مازدا6","CX5",
+            "كابرس","ماليبو","تاهو","سلفرادو",
+            "يوكن","سييرا","اكاديا",
+            "اكسبلورر","اكسبديشن","توروس","اف150",
+            "لكزس ES","لكزس LS","لكزس LX","لكزس RX",
+            "مرسيدس C","مرسيدس E","مرسيدس S","مرسيدس G",
+            "بي ام دبليو X5","بي ام دبليو X6","بي ام دبليو الفئة الخامسة",
+            "بورش كايين","بورش باناميرا",
+            "لامبورغيني","فيراري",
+            "دودج تشارجر","دودج تشالنجر",
+            "جيب رانجلر","جيب جراند شيروكي",
+            "تسلا موديل 3","تسلا موديل S"
+            ],
+
+            car_brands: [
+            "تويوتا","نيسان","هيونداي","كيا","مازدا","هوندا",
+            "لكزس","مرسيدس","بي ام دبليو","اودي",
+            "شيفروليه","جي ام سي","فورد","دودج",
+            "جيب","تسلا","بورش","فيراري","لامبورغيني",
+            "رينو","بيجو","ميتسوبيشي","سوبارو","سوزوكي"
+            ],
+
+            food: [
+            "كبسة","مندي","مضغوط","بخاري","شاورما","فلافل","حمص",
+            "برجر","بيتزا","باستا","مكرونة","لازانيا",
+            "سوشي","رامن","نودلز",
+            "بروستد","مسحب","بطاطس مقلية",
+            "سمبوسة","كبة","ورق عنب","تبولة","فتوش",
+            "مقلوبة","مسخن","سليق","جريش","قرصان","مرقوق",
+            "مطازيز","حنيني","كليجا",
+            "دونات","كيك","كوكيز","بانكيك","وافل",
+            "ايسكريم","تشيزكيك"
+            ],
+
+            fastfood_brands: [
+            "البيك","ماكدونالدز","كنتاكي","هرفي","برجر كنج",
+            "هارديز","شاورمر","كودو","صب واي",
+            "بيتزا هت","دومينوز","بابا جونز"
+            ],
+
+            companies: [
+            "ارامكو","سابك","stc","موبايلي","زين",
+            "الراجحي","الاهلي","الرياض","الانماء",
+            "المراعي","نادك","صافولا",
+            "نون","امازون","هنقرستيشن","جاهز","مرسول","طلبات",
+            "اوبر","كريم"
+            ],
+
+            electronics: [
+            "جوال","ايفون","سامسونج",
+            "ايباد","تابلت",
+            "لابتوب","ماك بوك",
+            "شاشة","تلفزيون","سماعة",
+            "ايربودز","شاحن","بطارية",
+            "ماوس","كيبورد",
+            "كاميرا","درون",
+            "بلايستيشن","اكس بوكس","نينتندو",
+            "راوتر","مودم","فلاش"
+            ],
+
+            games: [
+            "فيفا","كول اوف ديوتي","فورت نايت","ماينكرافت",
+            "جراند ثفت اوتو","قراند","ببجي",
+            "روبلوكس","باتلفيلد","فالورانت"
+            ],
+
+            countries: [
+            "السعودية","الامارات","الكويت","قطر","البحرين","عمان",
+            "مصر","المغرب","الجزائر","تونس",
+            "امريكا","كندا","بريطانيا","فرنسا","المانيا",
+            "ايطاليا","اسبانيا","اليابان","كوريا","الصين","الهند"
+            ],
+
+            cities: [
+            "الرياض","جدة","مكة","المدينة","الدمام",
+            "الخبر","الظهران","الطائف","ابها","تبوك",
+            "بريدة","حائل","نجران","الجبيل","ينبع"
+            ],
+
+            animals: [
+            "اسد","نمر","فهد","فيل","زرافة","قرد",
+            "حصان","جمل","غزال",
+            "ذئب","ثعلب",
+            "كلب","قطة","ارنب","دب",
+            "قرش","حوت","دلفين",
+            "صقر","نسر","بطريق"
+            ],
+
+            sports: [
+            "كرة القدم","كرة السلة","كرة الطائرة",
+            "التنس","الجولف","السباحة",
+            "الفورمولا","الملاكمة","المصارعة"
+            ],
+
+            famous_people: [
+            "الملك سلمان","محمد بن سلمان",
+            "محمد عبده","عبدالمجيد عبدالله","راشد الماجد",
+            "رابح صقر","ماجد المهندس",
+            "ناصر القصبي","عبدالله السدحان",
+            "رونالدو","ميسي","نيمار","محمد صلاح"
+            ],
+
+            jobs: [
+            "طبيب","مهندس","معلم","طيار",
+            "شرطي","عسكري","محامي",
+            "مبرمج","محاسب",
+            "طباخ","خباز",
+            "حلاق","نجار","سباك",
+            "رسام","مصور","مخرج","ممثل"
+            ]
+        };
 
         let gameState = { status: 'lobby' };
         let players = {};
         let myPlayer = { name: myName, turnCount: 0 };
+        let timerInterval;
 
         get(ref(db, `hotcold/${pin}/players/${myId}`)).then((snap) => {
             if (!snap.exists()) set(ref(db, `hotcold/${pin}/players/${myId}`), myPlayer);
@@ -265,12 +286,129 @@
             const prevEval = gameState.lastEval;
             gameState = newState;
             
-            // تفعيل نبضة الترمومتر للتقييم الكلي
             if (gameState.lastEval && gameState.lastEval !== prevEval && gameState.lastEval !== 'none') {
                 triggerEvalEffect(gameState.lastEval);
             }
+            
+            manageDynamicTimer();
             renderUI();
         });
+
+        // --- إدارة الوقت المتصاعد (Dynamic Timer) ---
+        function manageDynamicTimer() {
+            clearInterval(timerInterval);
+            if (gameState.status !== 'playing' || !gameState.deadline) return;
+
+            timerInterval = setInterval(() => {
+                let timeLeft = Math.max(0, Math.ceil((gameState.deadline - Date.now()) / 1000));
+                const timerEl = document.getElementById('timerText');
+                const badgeEl = document.getElementById('timerBadge');
+                
+                if(timerEl) timerEl.innerText = timeLeft;
+                
+                if (timeLeft <= 5) badgeEl?.classList.add('timer-warning');
+                else badgeEl?.classList.remove('timer-warning');
+
+                // إذا انتهى الوقت
+                if (timeLeft === 0) {
+                    clearInterval(timerInterval);
+                    // يقوم السائل (صاحب الدور) بتمرير دوره آلياً لتجنب التكرار
+                    if (gameState.currentGuesser === myId && !gameState.currentVotes) {
+                        forcePassTurn();
+                    }
+                }
+            }, 1000);
+        }
+
+        async function forcePassTurn() {
+            const currentGId = gameState.currentGuesser;
+            await update(ref(db, `hotcold/${pin}/players/${currentGId}`), {
+                turnCount: (players[currentGId].turnCount || 0) + 1
+            });
+            await update(stateRef, {
+                currentGuesser: getNextGuesser(currentGId),
+                currentVotes: null,
+                lastEval: 'timeout',
+                deadline: calculateNewDeadline()
+            });
+        }
+
+        // حساب الوقت بناءً على أقصى عدد محاولات وصل له أي لاعب
+        function calculateNewDeadline() {
+            let maxTurns = 0;
+            Object.values(players).forEach(p => { if((p.turnCount||0) > maxTurns) maxTurns = p.turnCount; });
+            
+            let seconds = 30;
+            if (maxTurns >= 20) seconds = 10;
+            else if (maxTurns >= 10) seconds = 15;
+            
+            return Date.now() + (seconds * 1000);
+        }
+
+        // --- نظام تغيير الكلمات (Reroll) ---
+        window.requestReroll = async () => {
+            await update(stateRef, {
+                rerollVote: { active: true, initiator: myName, votes: { [myId]: 'yes' } }
+            });
+        };
+
+        window.castRerollVote = async (vote) => {
+            await update(ref(db, `hotcold/${pin}/state/rerollVote/votes/${myId}`), vote);
+            
+            // الهوست يتحقق من النتيجة
+            if (isHost) {
+                const stateSnap = await get(stateRef);
+                const currentVoteData = stateSnap.val().rerollVote;
+                const pIds = Object.keys(players);
+                
+                if (Object.keys(currentVoteData.votes).length === pIds.length) {
+                    let yesCount = Object.values(currentVoteData.votes).filter(v => v === 'yes').length;
+                    if (yesCount > pIds.length / 2) {
+                        distributeWords(); // إعادة التوزيع
+                        await update(stateRef, { rerollVote: null });
+                    } else {
+                        await update(stateRef, { rerollVote: null });
+                    }
+                }
+            }
+        };
+
+        // --- توزيع الكلمات العبقري ---
+        window.distributeWords = async () => {
+            const pIds = Object.keys(players).sort();
+            if (pIds.length < 2) return alert("نحتاج لاعبين اثنين على الأقل لبدء اللعبة!");
+
+            let updates = {};
+            let categories = Object.keys(WORDS_DB);
+
+            pIds.forEach((id) => {
+                let cat;
+                // 85% احتمال أخذ تصنيف فريد، 15% عشوائي تماماً
+                if (Math.random() > 0.15 && categories.length > 0) {
+                    let catIdx = Math.floor(Math.random() * categories.length);
+                    cat = categories.splice(catIdx, 1)[0];
+                } else {
+                    cat = Object.keys(WORDS_DB)[Math.floor(Math.random() * Object.keys(WORDS_DB).length)];
+                }
+
+                let wordsArr = WORDS_DB[cat];
+                let word = wordsArr[Math.floor(Math.random() * wordsArr.length)];
+
+                updates[`hotcold/${pin}/players/${id}/secret`] = word;
+                updates[`hotcold/${pin}/players/${id}/turnCount`] = 0;
+            });
+
+            updates[`hotcold/${pin}/state/status`] = 'playing';
+            updates[`hotcold/${pin}/state/currentGuesser`] = pIds[0];
+            updates[`hotcold/${pin}/state/lastEval`] = 'none';
+            updates[`hotcold/${pin}/state/currentVotes`] = null;
+            updates[`hotcold/${pin}/state/rerollVote`] = null;
+            updates[`hotcold/${pin}/state/deadline`] = Date.now() + (30 * 1000);
+            
+            await update(ref(db), updates);
+        };
+
+        window.startGame = distributeWords;
 
         function getNextGuesser(currentId) {
             const pIds = Object.keys(players).sort();
@@ -278,83 +416,47 @@
             return pIds[(idx + 1) % pIds.length];
         }
 
-        window.startGame = async () => {
-            const pIds = Object.keys(players).sort();
-            if (pIds.length < 2) return alert("نحتاج لاعبين اثنين على الأقل لبدء اللعبة!");
-
-            let shuffled = [...WORDS].sort(() => 0.5 - Math.random());
-            let updates = {};
-            
-            pIds.forEach((id, index) => {
-                updates[`hotcold/${pin}/players/${id}/secret`] = shuffled[index];
-                updates[`hotcold/${pin}/players/${id}/turnCount`] = 0;
-            });
-
-            updates[`hotcold/${pin}/state`] = {
-                status: 'playing',
-                currentGuesser: pIds[0],
-                lastEval: 'none',
-                currentVotes: null // تصفير التصويتات
-            };
-            
-            await update(ref(db), updates);
-        };
-
-        // --- نظام التقييم بالإجماع ---
+        // --- التقييم بالإجماع ---
         window.sendEval = async (evalType) => {
-            // لا يمكنك تقييم نفسك، ولا يمكنك التقييم مرتين
             if (gameState.currentGuesser === myId) return; 
             if (gameState.currentVotes && gameState.currentVotes[myId]) return; 
 
             const currentGId = gameState.currentGuesser;
             const pCount = Object.keys(players).length;
-            const requiredVotes = pCount - 1; // الجميع عدا السائل
+            const requiredVotes = pCount - 1;
 
-            // إذا ضغط أحد (صح)، يفوز فوراً ولا ننتظر البقية
             if (evalType === 'correct') {
                 await update(stateRef, {
-                    status: 'game_over',
-                    winnerId: currentGId,
-                    winnerName: players[currentGId].name,
-                    winnerWord: players[currentGId].secret
+                    status: 'game_over', winnerId: currentGId, winnerName: players[currentGId].name, winnerWord: players[currentGId].secret, deadline: null
                 });
                 return;
             }
 
-            // إضافة صوتي الحالي
             let newVotes = gameState.currentVotes || {};
             newVotes[myId] = evalType;
 
-            // هل اكتمل التصويت؟
             if (Object.keys(newVotes).length >= requiredVotes) {
-                // اكتمل! استخراج أعلى تقييم لتلوين الترمومتر به
                 let allVals = Object.values(newVotes);
                 let overallEval = 'cold';
                 if (allVals.includes('hot')) overallEval = 'hot';
                 else if (allVals.includes('warm')) overallEval = 'warm';
 
-                // زيادة عدد المحاولات للسائل
                 await update(ref(db, `hotcold/${pin}/players/${currentGId}`), {
                     turnCount: (players[currentGId].turnCount || 0) + 1
                 });
 
-                // تحديث الحالة لتظهر جميع الأصوات وتوهج الترمومتر
-                await update(stateRef, {
-                    currentVotes: newVotes,
-                    lastEval: overallEval 
-                });
+                await update(stateRef, { currentVotes: newVotes, lastEval: overallEval, deadline: null });
 
-                // انتظار 3 ثواني ليقرأ الجميع النتائج، ثم ننتقل للسائل التالي
                 setTimeout(async () => {
                     await update(stateRef, {
                         currentGuesser: getNextGuesser(currentGId),
-                        currentVotes: null, // تصفير التصويتات للround القادم
-                        lastEval: 'none'
+                        currentVotes: null,
+                        lastEval: 'none',
+                        deadline: calculateNewDeadline()
                     });
                 }, 3000);
 
             } else {
-                // لم يكتمل التصويت بعد، فقط نحدث قائمة الأصوات
                 await update(stateRef, { currentVotes: newVotes });
             }
         };
@@ -369,6 +471,7 @@
             if (evalType === 'cold') ambientBg.classList.add('state-cold');
             else if (evalType === 'warm') ambientBg.classList.add('state-warm');
             else if (evalType === 'hot') ambientBg.classList.add('state-hot');
+            else if (evalType === 'timeout') ambientBg.classList.add('state-neutral');
             
             hub.classList.add('thermo-bounce');
             setTimeout(() => hub.classList.remove('thermo-bounce'), 400);
@@ -377,6 +480,31 @@
         function renderUI() {
             const overlay = document.getElementById('overlay');
             const pIds = Object.keys(players).sort();
+
+            // --- تصويت إعادة الكلمات (Reroll Vote) ---
+            if (gameState.status === 'playing' && gameState.rerollVote && gameState.rerollVote.active) {
+                overlay.style.display = 'flex';
+                let votes = gameState.rerollVote.votes || {};
+                
+                if (!votes[myId]) {
+                    overlay.innerHTML = `
+                        <div class="overlay-card">
+                            <h2 style="color:var(--warm);">تغيير الكلمات؟ 🔄</h2>
+                            <p>طلب <b style="color:var(--cold);">${gameState.rerollVote.initiator}</b> تغيير الكلمات لأن أحدها غير معروف.</p>
+                            <div class="vote-actions">
+                                <button class="btn-vote-yes" onclick="castRerollVote('yes')">✔️ نعم، أوافق</button>
+                                <button class="btn-vote-no" onclick="castRerollVote('no')">❌ لا، استمر</button>
+                            </div>
+                        </div>`;
+                } else {
+                    overlay.innerHTML = `
+                        <div class="overlay-card">
+                            <h2 style="color:var(--warm);">جاري التصويت...</h2>
+                            <p>تم تسجيل رأيك، ننتظر بقية اللاعبين (${Object.keys(votes).length}/${pIds.length})</p>
+                        </div>`;
+                }
+                return; // إيقاف تحديث الواجهة حتى ينتهي التصويت
+            }
 
             // ---- اللوبي ----
             if (gameState.status === 'lobby') {
@@ -390,7 +518,7 @@
                         <div style="margin: 15px 0;">${badges}</div>
                         <p style="color: #cbd5e1; font-weight:bold;">${pIds.length} لاعبين متصلين</p>
                         ${isHost
-                            ? `<button class="btn-start" onclick="startGame()" ${pIds.length < 2 ? 'disabled' : ''}>🚀 بدء اللعب الجماعي!</button>`
+                            ? `<button class="btn-start" onclick="startGame()" ${pIds.length < 2 ? 'disabled' : ''}>🚀 بدء اللعب!</button>`
                             : `<p style="color:var(--warm); margin-top:20px; font-weight:bold;">⏳ في انتظار الهوست للبدء...</p>`
                         }
                     </div>
@@ -408,7 +536,7 @@
                         <div style="font-size:2rem; font-weight:900; color:var(--green);">البطل ${gameState.winnerName}!</div>
                         <div style="font-size:1.2rem; color:#cbd5e1; margin:10px 0;">الكلمة: <strong style="color:var(--warm); font-size:1.5rem;">${gameState.winnerWord}</strong></div>
                         <div style="color:#64748b;">استغرق ${winnerTurns + 1} أسئلة ليعرفها!</div>
-                        ${isHost ? `<button class="btn-start" onclick="startGame()">🔄 جولة انتقام جديدة!</button>` : `<p style="color:var(--warm); margin-top:20px;">⏳ الهوست يجهز الجولة...</p>`}
+                        ${isHost ? `<button class="btn-start" onclick="distributeWords()">🔄 جولة انتقام جديدة!</button>` : `<p style="color:var(--warm); margin-top:20px;">⏳ الهوست يجهز الجولة...</p>`}
                     </div>
                 `;
                 return;
@@ -416,7 +544,7 @@
 
             overlay.style.display = 'none';
 
-            // ---- رسم منطقة الخصوم (وإظهار تصويت كل شخص) ----
+            // ---- رسم منطقة الخصوم ----
             const oppContainer = document.getElementById('opponentsContainer');
             oppContainer.innerHTML = '';
             
@@ -425,7 +553,6 @@
                 const opp = players[id];
                 const isActive = gameState.currentGuesser === id ? 'is-active-turn' : '';
                 
-                // استخراج تصويت هذا اللاعب إن وجد
                 let voteHtml = '';
                 if (gameState.currentVotes && gameState.currentVotes[id]) {
                     let v = gameState.currentVotes[id];
@@ -450,7 +577,7 @@
                 `;
             });
 
-            // ---- رسم منطقتي الخاصة (الأسفل) ----
+            // ---- رسم منطقتي الخاصة ----
             document.getElementById('myName').textContent = myName;
             document.getElementById('myScore').textContent = `${myPlayer.turnCount || 0} سؤال`;
             const myZone = document.getElementById('myZone');
@@ -466,6 +593,7 @@
                 cold:  { cls:'thermo-state-cold', emoji:'🧊', label:'بارد' },
                 warm:  { cls:'thermo-state-warm', emoji:'🌤️', label:'دافئ' },
                 hot:   { cls:'thermo-state-hot',  emoji:'🔥', label:'حار!' },
+                timeout: { cls:'thermo-state-timeout', emoji:'⏱️', label:'انتهى الوقت' },
                 none:  { cls:'thermo-state-none', emoji:'🌡️', label:'ننتظر' }
             };
             const evalInfo = evalMap[gameState.lastEval] || evalMap.none;
@@ -482,27 +610,23 @@
             const currentVotesCount = gameState.currentVotes ? Object.keys(gameState.currentVotes).length : 0;
 
             if (gameState.currentGuesser === myId) {
-                // أنا السائل، أنتظر إجماع البقية
                 evalGrid.style.display = 'none';
                 waitBox.style.display = 'block';
                 waitBox.innerHTML = `<p>⏳ ننتظر تقييم أصدقائك... (${currentVotesCount}/${totalVotesNeeded})</p>`;
                 instruction.textContent = '🎤 دورك! اسأل أصدقاءك بصوتك عن لوحتك';
             } else {
-                // دور زميل آخر للسؤال
                 const activeName = players[gameState.currentGuesser]?.name || 'زميلك';
                 let myVote = gameState.currentVotes ? gameState.currentVotes[myId] : null;
 
                 if (myVote) {
-                    // لقد قمت بالتصويت، أنتظر البقية
                     evalGrid.style.display = 'none';
                     waitBox.style.display = 'block';
-                    waitBox.innerHTML = `<p>✅ تم تسجيل تقييمك! ننتظر البقية... (${currentVotesCount}/${totalVotesNeeded})</p>`;
+                    waitBox.innerHTML = `<p>✅ تم التسجيل! ننتظر البقية... (${currentVotesCount}/${totalVotesNeeded})</p>`;
                     instruction.innerHTML = `ننتظر إجماع البقية على سؤال <span style="color:var(--warm)">${activeName}</span>`;
                 } else {
-                    // لم أصوت بعد، يجب أن أقيم
                     evalGrid.style.display = 'grid';
                     waitBox.style.display = 'none';
-                    instruction.innerHTML = `👂 استمع لسؤال <span style="color:var(--warm)">${activeName}</span> وقيمه!`;
+                    instruction.innerHTML = `👂 استمع لسؤال <span style="color:var(--warm)">${activeName}</span> وقيمه بسرعة!`;
                 }
             }
         }
@@ -513,8 +637,14 @@
     <div class="ambient-bg state-neutral" id="ambientBg"></div>
     <div class="overlay" id="overlay"></div>
 
-    <div class="game-arena">
+    <div class="top-tools">
+        <button class="btn-reroll" onclick="requestReroll()">🔁 تغيير الكلمات (غير معروفة)</button>
+        <div class="timer-badge" id="timerBadge">
+            ⏱️ <span id="timerText">--</span>
+        </div>
+    </div>
 
+    <div class="game-arena">
         <div class="opponents-container" id="opponentsContainer"></div>
 
         <div class="center-divider">
@@ -534,7 +664,6 @@
                 <span class="score-tag" id="myScore" style="margin-right:auto;">0 سؤال</span>
             </div>
         </div>
-
     </div>
 
     <div class="bottom-panel">
