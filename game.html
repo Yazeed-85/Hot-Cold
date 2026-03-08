@@ -17,7 +17,16 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: white; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg);
+            color: white;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
 
         /* ====== خلفية حية ====== */
         .ambient-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; transition: all 1s ease; }
@@ -121,9 +130,12 @@
         .wait-box p { color: var(--warm); font-size: 1.1rem; font-weight: bold; animation: waitPulse 1.5s infinite; margin:0;}
         @keyframes waitPulse { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
 
+        /* أزرار التصويت للتغيير */
         .vote-actions { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-vote-yes { flex: 1; background: #10b981; color: white; padding: 10px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn-vote-no { flex: 1; background: #ef4444; color: white; padding: 10px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .btn-vote-yes { flex: 1; background: #10b981; color: white; padding: 10px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+        .btn-vote-yes:active { transform: scale(0.95); }
+        .btn-vote-no { flex: 1; background: #ef4444; color: white; padding: 10px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+        .btn-vote-no:active { transform: scale(0.95); }
 
     </style>
     <script type="module">
@@ -261,7 +273,7 @@
             await update(ref(db, `hotcold/${pin}/players/${myId}`), { usedHint: true });
         };
 
-        // --- نظام تغيير الكلمات (Reroll) المُصلح ---
+        // --- نظام تغيير الكلمات (Reroll) المُصلح والمضمون ---
         window.requestReroll = async () => {
             await update(stateRef, {
                 rerollVote: { active: true, initiator: myName, votes: { [myId]: 'yes' } }
@@ -269,7 +281,8 @@
         };
 
         window.castRerollVote = async (vote) => {
-            await update(ref(db, `hotcold/${pin}/state/rerollVote/votes/${myId}`), vote);
+            // تم التعديل من update إلى set لضمان وصول التصويت للسيرفر بشكل صحيح
+            await set(ref(db, `hotcold/${pin}/state/rerollVote/votes/${myId}`), vote);
         };
 
         async function checkRerollStatus() {
@@ -420,7 +433,7 @@
                             <p>تم تسجيل رأيك، ننتظر بقية اللاعبين (${Object.keys(votes).length}/${pIds.length})</p>
                         </div>`;
                 }
-                return;
+                return; // إيقاف تحديث الواجهة حتى ينتهي التصويت
             }
 
             // ---- اللوبي ----
